@@ -1,0 +1,31 @@
+{
+  "name": "vocation",
+  "version": "0.0.1",
+  "dependencies": {
+    "@dtone/dvs": "^1.1.0",
+    "@sendgrid/mail": "^7.6.0",
+    "aws-sdk": "^2.1046.0",
+    "axios": "^0.24.0",
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "express": "4.17.1",
+    "fcm-node": "^1.6.1",
+    "firebase-admin": "^10.0.2",
+    "fs-promise": "^2.0.3",
+    "i18next": "^21.6.3",
+    "i18next-fs-backend": "^1.1.4",
+    "i18next-http-middleware": "^3.1.4",
+    "lodash": "^4.17.21",
+    "md5": "^2.3.0",
+    "multer": "^1.4.3",
+    "mysql2": "^2.3.3-rc.0",
+    "request": "^2.88.2",
+    "sequelize": "^6.9.0",
+    "socket.io": "^4.4.1",
+    "stripe": "^8.195.0",
+    "swagger-jsdoc": "^6.1.0",
+    "swagger-ui-express": "^4.3.0",
+    "twilio": "^3.71.2",
+    "uuid": "^8.3.2"
+  }
+}
