@@ -298,6 +298,75 @@ let VocationsList = (req, res, next) => {
 
   /**
  * @swagger
+ * /api/v1/vocation/adminvocationslist:
+ *   post:
+ *     summary: vocations List.
+ *     tags:
+ *      - Vocation
+ *     parameters :
+ *     - name: x-auth-api-key
+ *       in: header   
+ *       description: an authorization header
+ *       required: true
+ *       type: string 
+ *     - name: Accept-Language
+ *       in: header   
+ *       description: Language
+ *       required: false
+ *       type: string 
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               page:
+ *                 type: string
+ *                 example: 1
+ *                 paramType: body
+ *               limit:
+ *                 type: string
+ *                 example: 2
+ *                 paramType: body
+ *     responses:
+ *       200:
+ *         description: user object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: error in request processing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *                   example: 400
+*/
+let AdminVocationsList = (req, res, next) => {
+    return vocationManager
+        .AdminVocationsList(req.body)
+        .then(data => {
+            let result = {
+                status:200,
+                data: data
+            }
+            return res.json(result);
+        })
+        .catch(next);
+}
+
+  /**
+ * @swagger
  * /api/v1/vocation/getsuggetion:
  *   post:
  *     summary: get suggetion from selected vocations List.
@@ -424,6 +493,75 @@ let GetSuggetion = (req, res, next) => {
 let SubVocationsList = (req, res, next) => {
     return vocationManager
         .SubVocationsList(req.body)
+        .then(data => {
+            let result = {
+                status:200,
+                data: data
+            }
+            return res.json(result);
+        })
+        .catch(next);
+}
+
+  /**
+ * @swagger
+ * /api/v1/vocation/adminsubvocationslist:
+ *   post:
+ *     summary: subvocations List.
+ *     tags:
+ *      - Vocation
+ *     parameters :
+ *     - name: x-auth-api-key
+ *       in: header   
+ *       description: an authorization header
+ *       required: true
+ *       type: string 
+ *     - name: Accept-Language
+ *       in: header   
+ *       description: Language
+ *       required: false
+ *       type: string 
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               page:
+ *                 type: string
+ *                 example: 1
+ *                 paramType: body
+ *               limit:
+ *                 type: string
+ *                 example: 2
+ *                 paramType: body
+ *     responses:
+ *       200:
+ *         description: user object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: error in request processing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *                   example: 400
+*/
+let AdminSubVocationsList = (req, res, next) => {
+    return vocationManager
+        .AdminSubVocationsList(req.body)
         .then(data => {
             let result = {
                 status:200,
@@ -867,6 +1005,8 @@ let SubVocationUpdate = (req, res, next) => {
 }
  
  module.exports = {
+    AdminVocationsList:AdminVocationsList,
+    AdminSubVocationsList:AdminSubVocationsList,
     CreateVocation: CreateVocation,
     VocationsList : VocationsList,
     ChangeVocationStatus:ChangeVocationStatus,

@@ -21,9 +21,9 @@ const { use } = require("../routes/Users");
 let CreateVocation = async (req) => {
     let body = req.body.body ? JSON.parse(req.body.body) : req.body;
     if (helper.undefinedOrNull(body)) {
-        throw new BadRequestError("body_empty");
+        throw new BadRequestError("Request body comes empty");
     }
-    ['vocationName', 'vocationStatus' ].forEach(x => {
+    ['vocationName'].forEach(x => {
         if (!body[x]) {
             throw new BadRequestError(x + " is required");
         }
@@ -33,7 +33,7 @@ let CreateVocation = async (req) => {
         .findOne({ where: {vocationName: body.vocationName}, raw: true });
     
     if(user) {
-        throw new BadRequestError("vocation name already exists");
+        throw new BadRequestError("Vocation name already exists");
     }
 
     let filename = "";
@@ -70,7 +70,7 @@ let CreateVocation = async (req) => {
 let CreateSubVocation = async (req) => {
     let body = req.body.body ? JSON.parse(req.body.body) : req.body;
     if (helper.undefinedOrNull(body)) {
-        throw new BadRequestError("body_empty");
+        throw new BadRequestError("Request body comes empty");
     }
     [ 'vocationID' ,'subVocationName'].forEach(x => {
         if (!body[x]) {
@@ -82,7 +82,7 @@ let CreateSubVocation = async (req) => {
         .findOne({ where: { vocationID: body.vocationID}, raw: true });
     
     if(!user) {
-        throw new BadRequestError("selected vocation doesn't exists");
+        throw new BadRequestError("Selected vocation doesn't exists");
     }
     
     let subvocation = await SubVocationModel
@@ -127,10 +127,63 @@ let VocationsList = async (body) => {
     let limit = (body.limit) ? parseInt(body.limit) : 10;
     let page = body.page || 1;
     let offset = (page - 1) * limit;
+    let findData = {vocationStatus : 'Active'}
+        if (body.filters) {
+            if (body.filters.searchtext) {
+					findData["$and"] = [
+						{vocationName: {$like: '%' + body.filters.searchtext + '%'}}
+					]
+            }
+        }
+    if(body.page || body.limit) {
+       let allVocation = await VocationModel.findAll({
+            where: findData,
+            limit,
+            offset,
+            order: [['vocationID', 'DESC']],
+            raw: true
+        });
+        for(let i=0 ; i<allVocation.length; i++) {
+            allVocation[i].vocationImage = config.upload_folder + config.upload_entities.vocation_image_folder + allVocation[i].vocationImage;
+        }
+        let allVocationCount = await VocationModel.count({   
+            where: findData,     
+            order: [['vocationID', 'DESC']],
+            raw: true
+        });
+        let _result = { total_count: 0 };
+        _result.slides = allVocation;
+        _result.total_count = allVocationCount;
+        return _result;
+    }   else {
+        let allVocation = await VocationModel.findAll({
+            where: findData,
+            order: [['vocationID', 'DESC']],
+            raw: true
+        });
+        for(let i=0 ; i<allVocation.length; i++) {
+            allVocation[i].vocationImage = config.upload_folder + config.upload_entities.vocation_image_folder + allVocation[i].vocationImage;
+        }
+        let allVocationCount = await VocationModel.count({        
+            order: [['vocationID', 'DESC']],
+            raw: true
+        });
+        let _result = { total_count: 0 };
+        _result.slides = allVocation;
+        _result.total_count = allVocationCount;
+        return _result;
+    } 
+    
+}
+
+let AdminVocationsList = async (body) => {
+    let limit = (body.limit) ? parseInt(body.limit) : 10;
+    let page = body.page || 1;
+    let offset = (page - 1) * limit;
     let findData = {}
         if (body.filters) {
             if (body.filters.searchtext) {
-					findData["$or"] = [
+					findData["$and"] = [
 						{vocationName: {$like: '%' + body.filters.searchtext + '%'}}
 					]
             }
@@ -177,6 +230,43 @@ let VocationsList = async (body) => {
 }
 
 let SubVocationsList = async (body) => {
+    let limit = (body.limit) ? parseInt(body.limit) : 10;
+    let page = body.page || 1;
+    let offset = (page - 1) * limit;
+    let findData = {subVocationStatus : 'Active'}
+        if (body.filters) {
+            if (body.filters.searchtext) {
+					findData["$or"] = [
+						{subVocationName: {$like: '%' + body.filters.searchtext + '%'}}
+					]
+            }
+        }
+    let allSubVocation = await SubVocationModel.findAll({
+        where: findData,
+        limit,
+        offset,
+        order: [['subVocationID', 'DESC']],
+        raw: true
+    });
+    for(let i=0; i < allSubVocation.length; i++) {
+        let vocationName =  await VocationModel.findOne({where : {vocationID : allSubVocation[i].vocationID}},{
+            raw: true
+        });
+        allSubVocation[i].vocationName = vocationName.vocationName
+        allSubVocation[i].subVocationImage = config.upload_folder + config.upload_entities.sub_vocation_image_folder + allSubVocation[i].subVocationImage;
+    }
+    let allSubVocationCount = await SubVocationModel.count({   
+        where: findData,     
+        order: [['subVocationID', 'DESC']],
+        raw: true
+    });
+    let _result = { total_count: 0 };
+    _result.slides = allSubVocation;
+    _result.total_count = allSubVocationCount;
+    return _result;
+}
+
+let AdminSubVocationsList = async (body) => {
     let limit = (body.limit) ? parseInt(body.limit) : 10;
     let page = body.page || 1;
     let offset = (page - 1) * limit;
@@ -244,7 +334,7 @@ let UserSelectVocation = async (body) => {
 
 let ChangeVocationStatus = async (body) => {
     if (helper.undefinedOrNull(body)) {
-        throw new BadRequestError("body_empty");
+        throw new BadRequestError("Request body comes empty");
     }
 
     if (helper.undefinedOrNull(body.vocationID)) {
@@ -260,10 +350,10 @@ let ChangeVocationStatus = async (body) => {
         throw new BadRequestError("invalid_creds");
     }
     if(user.vocationStatus == 'Active' && body.status == 1) {
-        throw new BadRequestError("Already activated"); 
+        throw new BadRequestError("Vocation Already activated"); 
     }
     if(user.vocationStatus == 'Inactive' && body.status != 1) {
-        throw new BadRequestError("Already inactivated"); 
+        throw new BadRequestError("Vocation Already inactivated"); 
     }
     let status = body.status == 1 ? 'Active' : 'Inactive'
     await VocationModel.update({vocationStatus : status}, { where: {vocationID : user.vocationID},  raw: true });
@@ -272,7 +362,7 @@ let ChangeVocationStatus = async (body) => {
 
 let ChangeSubVocationStatus = async (body) => {
     if (helper.undefinedOrNull(body)) {
-        throw new BadRequestError("body_empty");
+        throw new BadRequestError("Request body comes empty");
     }
 
     if (helper.undefinedOrNull(body.subVocationID)) {
@@ -288,10 +378,10 @@ let ChangeSubVocationStatus = async (body) => {
         throw new BadRequestError("invalid_creds");
     }
     if(user.subVocationStatus == 'Active' && body.status == 1) {
-        throw new BadRequestError("Already activated"); 
+        throw new BadRequestError("Sub Vocation Already activated"); 
     }
     if(user.subVocationStatus == 'Inactive' && body.status != 1) {
-        throw new BadRequestError("Already inactivated"); 
+        throw new BadRequestError("Sub Vocation Already inactivated"); 
     }
     let status = body.status == 1 ? 'Active' : 'Inactive'
     await SubVocationModel.update({subVocationStatus : status}, { where: {subVocationID : user.subVocationID},  raw: true });
@@ -325,7 +415,7 @@ let SubVocationDetail = async (req) => {
 let VocationUpdate = async (req) => {
     let body = req.body.body ? JSON.parse(req.body.body) : req.body;
     if (helper.undefinedOrNull(body)) {
-        throw new BadRequestError("body_empty");
+        throw new BadRequestError("Request body comes empty");
     }
         if (!body.vocationName) {
             throw new BadRequestError("vocationName is required");
@@ -357,7 +447,7 @@ let VocationUpdate = async (req) => {
 let SubVocationUpdate = async (req) => {
     let body = req.body.body ? JSON.parse(req.body.body) : req.body;
     if (helper.undefinedOrNull(body)) {
-        throw new BadRequestError("body_empty");
+        throw new BadRequestError("Request body comes empty");
     }
         if (!body.subVocationName) {
             throw new BadRequestError("Sub vocationName is required");
@@ -388,7 +478,7 @@ let SubVocationUpdate = async (req) => {
 
 let GetSuggetion = async (body) => {
     let subvocationData = await SubVocationModel.findAll({
-        where: {vocationID : body.vocationID},
+        where: {vocationID : body.vocationID, subVocationStatus : 'Active'},
         raw: true
     });
     for(let i=0; i<subvocationData.length; i++) {
@@ -398,6 +488,8 @@ let GetSuggetion = async (body) => {
 }
 
 module.exports = {
+    AdminVocationsList:AdminVocationsList,
+    AdminSubVocationsList:AdminSubVocationsList,
     CreateVocation : CreateVocation,
     VocationsList: VocationsList,
     ChangeVocationStatus: ChangeVocationStatus,

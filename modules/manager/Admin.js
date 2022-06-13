@@ -39,7 +39,7 @@ let Login = async (body) => {
         .findOne({ where: findData, attributes: ['Admin_ID', 'Admin_Mobile'], raw: true });
     
     if (!user) {
-        throw new BadRequestError("invalid_creds");
+        throw new BadRequestError("Please check your credentials again");
     } else {
         return { login: true }    
     }
@@ -130,27 +130,30 @@ let UsersDetail = async (req) => {
 }
 
 let UserUpdate = async (req) => {
-    let body = req.body.body ? JSON.parse(req.body.body) : req.body;
-    if (helper.undefinedOrNull(body)) {
-        throw new BadRequestError("body_empty");
-    }
-    ['userFirstName', 'userLastName','userEmail', 'userMobile', 'industryID','userJobDescription' ].forEach(x => {
-        if (!body[x]) {
-            throw new BadRequestError(x + " is required");
+    try {
+        let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+        if (helper.undefinedOrNull(body)) {
+            throw new BadRequestError("body_empty");
         }
-    });
-    let updateData = {};
-    let optionalFiled = ['userFirstName', 'userLastName','userEmail', 'userMobile', 'industryID','userJobDescription'];
-    optionalFiled.forEach(x => {
-        if (body[x]) {
-            updateData[x] = body[x];
-        }
-    });
-    await UsersModel.update(updateData, { where: { userID: req.params.userID }, raw: true });
-    let  user = await UsersModel.findOne({where:{userID: req.params.userID},raw:true});
-        
-    return {slides : user}
-    
+        ['userFirstName', 'userLastName','userEmail', 'userMobile', 'industryID','userJobDescription' ].forEach(x => {
+            if (!body[x]) {
+                throw new BadRequestError(x + " is required");
+            }
+        });
+        let updateData = {};
+        let optionalFiled = ['userFirstName', 'userLastName','userEmail', 'userMobile', 'industryID','userJobDescription'];
+        optionalFiled.forEach(x => {
+            if (body[x]) {
+                updateData[x] = body[x];
+            }
+        });
+        await UsersModel.update(updateData, { where: { userID: req.params.userID }, raw: true });
+        let  user = await UsersModel.findOne({where:{userID: req.params.userID},raw:true});
+            
+        return {slides : user}
+    } catch(err) {
+        console.log(err)
+    }    
 }
 
 let ChangeUserStatus = async (body) => {
@@ -168,7 +171,7 @@ let ChangeUserStatus = async (body) => {
     let user = await UsersModel
         .findOne({ where: {userID : body.userID}, raw: true });
     if (!user) {
-        throw new BadRequestError("invalid_creds");
+        throw new BadRequestError("Please check your credentials again");
     }
     if(user.userStatus == 'Active' && body.status == 1) {
         throw new BadRequestError("Already activated"); 

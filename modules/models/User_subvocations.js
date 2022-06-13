@@ -20,8 +20,7 @@ const UservocationModel = sequelize_mysql.define("usersubvocation",
         },
         usersubvocationStatus: {
             type: Sequelize.ENUM,
-            values: ['Following', 'Unfollowed'],
-            defaultValue : 'Following'
+            values: ['Following', 'Unfollowed'],            
         }
     },
     {

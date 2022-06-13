@@ -21,7 +21,7 @@ let CreateIndustry = async (body) => {
     // let body = req.body.body ? JSON.parse(req.body.body) : req.body;
     console.log(body)
     if (helper.undefinedOrNull(body)) {
-        throw new BadRequestError("body_empty");
+        throw new BadRequestError("Request body comes empty");
     }
     ['industryName'].forEach(x => {
         if (!body[x]) {
@@ -33,7 +33,7 @@ let CreateIndustry = async (body) => {
         .findOne({ where: {industryName: body.industryName}, raw: true });
     
     if(user) {
-        throw new BadRequestError("industry name already exists");
+        throw new BadRequestError("Industry name already exists");
     }
 
     let industryStatus = body.industryStatus == 1 ? 'Active' : 'Inactive';
@@ -68,6 +68,27 @@ let GetIndustry = async (body) => {
     return _result;
 }
 
+let GetWebIndustry = async (body) => {
+    let limit = (body.limit) ? parseInt(body.limit) : 10;
+    let page = body.page || 1;
+    let offset = (page - 1) * limit;
+    let allUser = await IndustryModel.findAll({
+        where : {industryStatus: 'Active'},
+        limit,
+        offset,
+        order: [['industryID', 'DESC']],
+        raw: true
+    });
+    let allUserCount = await IndustryModel.count({        
+        order: [['industryID', 'DESC']],
+        raw: true
+    });
+    let _result = { total_count: 0 };
+    _result.slides = allUser;
+    _result.total_count = allUserCount;
+    return _result;
+}
+
 let ChangeIndustryStatus = async (body) => {
     if (helper.undefinedOrNull(body)) {
         throw new BadRequestError("body_empty");
@@ -83,13 +104,13 @@ let ChangeIndustryStatus = async (body) => {
     let industry = await IndustryModel
         .findOne({ where: {industryID : body.industryID}, raw: true });
     if (!industry) {
-        throw new BadRequestError("invalid_creds");
+        throw new BadRequestError("Provided Industry is not available");
     }
     if(industry.industryStatus == 'Active' && body.status == 1) {
-        throw new BadRequestError("Already activated"); 
+        throw new BadRequestError("Industry is Already activated"); 
     }
     if(industry.industryStatus == 'Inactive' && body.status != 1) {
-        throw new BadRequestError("Already inactivated"); 
+        throw new BadRequestError("Industry is Already inactivated"); 
     }
     let status = body.status == 1 ? 'Active' : 'Inactive'
     await IndustryModel.update({industryStatus : status}, { where: {industryID : industry.industryID},  raw: true });
@@ -134,6 +155,7 @@ let IndustryUpdate = async (req) => {
 module.exports = {
     CreateIndustry : CreateIndustry,
     GetIndustry : GetIndustry,
+    GetWebIndustry : GetWebIndustry,
     ChangeIndustryStatus : ChangeIndustryStatus,
     IndustryDetail:IndustryDetail,
     IndustryUpdate:IndustryUpdate

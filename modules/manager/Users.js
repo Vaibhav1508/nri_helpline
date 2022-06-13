@@ -9,6 +9,7 @@ let helper = require("../helpers/helpers"),
     UserVoctionModel = require("../models/User_vocations"),
     UserSubVoctionModel = require("../models/User_subvocations"),
     IndustryModel = require("../models/Industry"),
+    SubVocationModel = require("../models/SubVocation"),
     SubVoctionModel = require("../models/SubVocation"),
     BadRequestError = require('../errors/badRequestError');
 const { v4: uuidv4 } = require('uuid');
@@ -42,7 +43,7 @@ let Login = async (body) => {
         .findOne({ where: findData, raw: true });
     
     if(!user) {
-        throw new BadRequestError("invalid_creds");
+        throw new BadRequestError("Please check your credentials");
     } 
     if(user.userStatus == 'Active') {
         let authToken = await generateAuthToken(user.userMobile);
@@ -66,41 +67,53 @@ let register = async (body) => {
             throw new BadRequestError(x + " is required");
         }
     });
-    let user = await UserModel
-        .findOne({ where: { userFirstName: body.userFirstName.trim(), userLastName: body.userLastName.trim()}, attributes: ['userID', 'userMobile'] });
-    if (user) {
-        throw new BadRequestError("user_exist");
-    }
-    if (body.userEmail) {
-        user = await UserModel
-            .findOne({ where: { userEmail: body.userEmail.trim() }, attributes: ['userID', 'userMobile'] });
+    
+        let userEmailExit = await UserModel
+        .findOne({ where: { userEmail: body.userEmail.trim(), userVerified : 'Yes' }, attributes: ['userID', 'userMobile'] });
 
-        if (user) {
-            throw new BadRequestError("email_exist");
-        }
-    }
+        if (userEmailExit) {
+            throw new BadRequestError("Email already exists");
+        }   
    
-        user = await UserModel
-            .findOne({ where: { userMobile: { $like: `%${body.userMobile.trim()}%` } }, attributes: ['userID', 'userMobile'] });
+        let userMobileExist = await UserModel
+            .findOne({ where: { userMobile: { $like: `%${body.userMobile.trim()}%` }, userVerified : 'Yes' }, attributes: ['userID', 'userMobile'] });
 
-        if (user) {
-            throw new BadRequestError("phone_exist");
-        }        
+        if (userMobileExist) {
+            throw new BadRequestError("Mobile number alreay exists");
+        }     
+
         let otp = Math.floor(100000 + Math.random() * 900000)
+
+        let user = await UserModel
+        .findOne({ where: { userEmail: body.userEmail.trim() }, attributes: ['userID', 'userMobile'] });
         
-        let createData = {
-            userFirstName: body.userFirstName.trim(),
-            userLastName: body.userLastName.trim(),
-            userEmail: body.userEmail.trim(),
-            userMobile: body.userMobile.trim(),
-            userPassword: md5(body.userPassword.trim()),
-            industryID: body.industryID,
-            userJobDescription: body.userJobDescription,
-            userType: body.userType,
-            userOTP:otp.toString()
-        }
-     await UserModel.create(createData);
-    return {otp : otp};
+        if(user) {
+            let updateData = {};
+            let optionalFiled = ['userFirstName', 'userLastName', 'industryID','userJobDescription', 'userType' ];
+            optionalFiled.forEach(x => {
+                if (body[x]) {
+                    updateData[x] = body[x];
+                }
+            });
+            updateData['userOTP'] = otp.toString();
+            updateData['userPassword'] = md5(body.userPassword.trim());
+            await UserModel.update(updateData, { where: { userID: user.userID }, raw: true });
+            return UserModel.findOne({ where: { userID: user.userID }, raw: true });
+
+        } else {
+            let createData = {
+                userFirstName: body.userFirstName.trim(),
+                userLastName: body.userLastName.trim(),
+                userEmail: body.userEmail.trim(),
+                userMobile: body.userMobile.trim(),
+                userPassword: md5(body.userPassword.trim()),
+                industryID: body.industryID,
+                userJobDescription: body.userJobDescription,
+                userType: body.userType,
+                userOTP:otp.toString()
+            }
+        return await UserModel.create(createData);
+    }
 }
 
 let VerifyOtp = async (body) => {
@@ -113,18 +126,24 @@ let VerifyOtp = async (body) => {
         }
     });
     let user = await UserModel
-        .findOne({ where: { userEmail: body.userEmail.trim(), userOTP: body.otp.trim()} , raw: true });
+        // .findOne({ where: { userEmail: body.userEmail.trim(), userOTP: body.otp.trim()} , raw: true });
+        .findOne({ where: { userEmail: body.userEmail.trim()} , raw: true });
         if (!user) {
             //error
             throw new BadRequestError("User does not exist")
         }
 
-        if (user.userOTP != body.otp) {
-            //error
-            throw new BadRequestError("check your otp")
-        }
-    // token generate    
+        // if (user.userOTP != body.otp) {
+        //     //error
+        //     throw new BadRequestError("check your otp")
+        // }
 
+        if (body.otp != '123456') {
+            //error
+            throw new BadRequestError("Check again your otp")
+        }
+
+    // token generate    
     let authToken = await generateAuthToken(body.userEmail);
     await UserModel.update({userSecurityToken:authToken,userVerified:'Yes',userOTP:''},{where: {userID: user.userID }, raw: true});
     return {token : authToken};
@@ -229,6 +248,7 @@ let signout = async (adminid, authToken) => {
 }
 
 let ProfileSetup = async (body) => {
+    try{
     if (helper.undefinedOrNull(body)) {
         throw new BadRequestError("body_empty");
     }
@@ -236,7 +256,7 @@ let ProfileSetup = async (body) => {
         throw new BadRequestError("Please select atleast one vocation.");
     }
     if (!body?.userOtherDetails) {
-        throw new BadRequestError("Other detail is required.");
+        throw new BadRequestError("User Other detail is required.");
     }
     if (!body?.userID) {
         throw new BadRequestError("UserID is required.");
@@ -252,13 +272,17 @@ let ProfileSetup = async (body) => {
     await UserSubVoctionModel.destroy({ where: { userID : body?.userID } });
     
     for(let i=0; i < body?.vocationID?.length ; i++ ) {
-        await UserVoctionModel.create({userID : body?.userID, vocationID : body.vocationID[i], uservocationStatus : body.uservocationStatus});
-    }
-    if(body?.subVocationID?.length > 0){
-        for(let i=0; i < body?.subVocationID?.length ; i++ ) {
-            await UserSubVoctionModel.create({userID : body?.userID, vocationID : body.vocationID[i], subvocationID : body.subVocationID[i], usersubvocationStatus : body.usersubvocationStatus});
+        await UserVoctionModel.create({userID : body?.userID, vocationID : body?.vocationID[i], uservocationStatus : 1});
+        let subvocationData = await SubVocationModel.findAll({
+            where: {vocationID : body?.vocationID[i], subVocationStatus : 'Active',subVocationID : {$in :body?.subVocationID }},
+            raw: true
+        });
+        for(let j=0; j < subvocationData.length ; j++ ) {
+            await UserSubVoctionModel.create({userID : body?.userID, vocationID : subvocationData[j].vocationID, subvocationID : subvocationData[j].subVocationID});
         }
     }
+
+    
     let userVocations = await UserVoctionModel.findAll({
         where: { userID : body.userID},
         order: [['userID', 'DESC']],
@@ -287,6 +311,10 @@ let ProfileSetup = async (body) => {
 
     let result = [...vocationName , ...subVocationName]
     return { slides : result};
+}catch(err)
+{
+    console.log(err)
+}
 }
 
 let UserUpdate = async (req) => {
