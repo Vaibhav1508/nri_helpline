@@ -1,6 +1,10 @@
 {
   "name": "vocation",
   "version": "0.0.1",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
   "dependencies": {
     "@dtone/dvs": "^1.1.0",
     "@sendgrid/mail": "^7.6.0",
@@ -27,5 +31,8 @@
     "swagger-ui-express": "^4.3.0",
     "twilio": "^3.71.2",
     "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.18"
   }
 }
