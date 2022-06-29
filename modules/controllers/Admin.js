@@ -1,8 +1,6 @@
+let adminManager = require("../manager/Admin");
 
-
- let adminManager = require('../manager/Admin');
-
-  /**
+/**
  * @swagger
  * /api/v1/Admin/login:
  *   post:
@@ -11,15 +9,15 @@
  *      - Admin Login
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -57,21 +55,21 @@
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
- let Login = (req, res, next) => {
-     return adminManager
-         .Login(req.body)
-         .then(data => {
-             let result = {
-                 status:200,
-                 data: data
-             }
-             return res.json(result);
-         })
-         .catch(next);
- } 
+ */
+let Login = (req, res, next) => {
+  return adminManager
+    .Login(req.body)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
-  /**
+/**
  * @swagger
  * /api/v1/Admin/userslist:
  *   post:
@@ -80,15 +78,15 @@
  *      - Admin User Management
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -126,21 +124,21 @@
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let UsersList = (req, res, next) => {
-    return adminManager
-        .UsersList(req.body)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-} 
+  return adminManager
+    .UsersList(req.body)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
-  /**
+/**
  * @swagger
  * /api/v1/Admin/user/:userID:
  *   post:
@@ -149,20 +147,20 @@ let UsersList = (req, res, next) => {
  *      - Admin User Management
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: userID
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
  *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -192,21 +190,21 @@ let UsersList = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let UsersDetail = (req, res, next) => {
-    return adminManager
-        .UsersDetail(req)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-} 
+  return adminManager
+    .UsersDetail(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
- /**
+/**
  * @swagger
  * /api/v1/Admin/user-update/:userID:
  *   put:
@@ -215,20 +213,20 @@ let UsersDetail = (req, res, next) => {
  *      - Admin User Management
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: userID
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
  *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -286,22 +284,21 @@ let UsersDetail = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let UserUpdate = (req, res, next) => {
-    return adminManager
-        .UserUpdate(req)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-} 
+  return adminManager
+    .UserUpdate(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
-
-  /**
+/**
  * @swagger
  * /api/v1/Admin/changeusersatus:
  *   post:
@@ -310,15 +307,15 @@ let UserUpdate = (req, res, next) => {
  *      - Admin User Management
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -356,59 +353,111 @@ let UserUpdate = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let ChangeUserStatus = (req, res, next) => {
-    return adminManager
-        .ChangeUserStatus(req.body)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-} 
+  return adminManager
+    .ChangeUserStatus(req.body)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
- 
+let changePassword = (req, res, next) => {
+  let adminid = req.admin ? req.admin.adminid : null;
+  return adminManager
+    .changePassword(adminid, req.body)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
- let changePassword = (req, res, next) => {
-    let adminid = req.admin ? req.admin.adminid : null;
-    return adminManager
-        .changePassword(adminid,req.body)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-} 
- 
- let signout = (req,res,next) => {
-     let adminid = req.admin ? req.admin.adminid : null;
-     let authToken = req.get('x-auth-token');
- 
-     return adminManager
-         .signout(adminid,authToken)
-         .then(data => {
-             let result = {
-                 status:200
-             }
-             return res.json(result);
-         })
-         .catch(next);
- }
- 
- 
- 
- module.exports = {
-    Login           : Login,  
-    changePassword:changePassword, 
-    signout          : signout,
-    UsersList : UsersList,
-    UsersDetail:UsersDetail,
-    UserUpdate:UserUpdate,
-    ChangeUserStatus : ChangeUserStatus
- };
+let signout = (req, res, next) => {
+  let adminid = req.admin ? req.admin.adminid : null;
+  let authToken = req.get("x-auth-token");
+
+  return adminManager
+    .signout(adminid, authToken)
+    .then((data) => {
+      let result = {
+        status: 200,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+let createBussinessAssociate = (req, res, next) => {
+  return adminManager
+    .craeateBusinessAssociate(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+let getAssociateList = (req, res, next) => {
+  return adminManager
+    .getAssociateList()
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+let AssociateUpdate = (req, res, next) => {
+  return adminManager
+    .AssociateUpdate(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+let AssociateDetails = (req, res, next) => {
+  return adminManager
+    .getAssociateDetails(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+module.exports = {
+  Login: Login,
+  changePassword: changePassword,
+  signout: signout,
+  UsersList: UsersList,
+  UsersDetail: UsersDetail,
+  UserUpdate: UserUpdate,
+  ChangeUserStatus: ChangeUserStatus,
+  createBussinessAssociate: createBussinessAssociate,
+  getAssociateList,
+  AssociateUpdate,
+  AssociateDetails,
+};

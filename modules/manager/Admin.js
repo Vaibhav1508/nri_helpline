@@ -8,6 +8,7 @@ let helper = require("../helpers/helpers"),
   IndustryModel = require("../models/Industry"),
   BadRequestError = require("../errors/badRequestError");
 const { v4: uuidv4 } = require("uuid");
+const CompanyModel = require("../models/Company");
 
 let generateAuthToken = async (phone) => {
   return uuidv4();
@@ -223,10 +224,138 @@ let ChangeUserStatus = async (body) => {
   return { status: body.status };
 };
 
+let craeateBusinessAssociate = async (req) => {
+  let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+
+  [
+    "companyName",
+    "userFirstName",
+    "userEmail",
+    "userMobile",
+    "languageID",
+    "streetAddress",
+    "pinCode",
+    "userCountryCode",
+    "userStateCode",
+    "userCityCode",
+  ].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
+  });
+
+  // create company
+  let company = await CompanyModel.create({
+    companyName: body.companyName,
+    companyEmail: body.userEmail,
+    companyLocations: body.streetAddress,
+  });
+
+  // create hr
+  let hr = await UsersModel.create({
+    ...body,
+    userLastName: "",
+    userCompanyId: company.companyID,
+  });
+
+  return { status: true };
+};
+
+let AssociateUpdate = async (req) => {
+  let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+
+  [
+    "userFirstName",
+    "userEmail",
+    "userMobile",
+    "languageID",
+    "pinCode",
+    "userCountryCode",
+    "userStateCode",
+    "userCityCode",
+  ].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
+  });
+
+  await UsersModel.update(body, {
+    where: { userID: req.params.userID },
+    raw: true,
+  });
+  let user = await UsersModel.findOne({
+    where: { userID: req.params.userID },
+    raw: true,
+  });
+
+  return { slides: user };
+};
+
+// get associate list
+let getAssociateList = async () => {
+  let associates = await UsersModel.findAll({
+    where: { userCompanyId: { $ne: null | 0 } },
+    raw: true,
+  });
+
+  // company list
+  let companyList = await CompanyModel.findAll({
+    raw: true,
+  });
+
+  const associateList = associates.map((x) => {
+    let company = companyList.find((y) => y.companyID == x.userCompanyId);
+    return {
+      userID: x.userID,
+      userFirstName: x.userFirstName,
+      userLastName: x.userLastName,
+      userEmail: x.userEmail,
+      userMobile: x.userMobile,
+      userCompanyId: x.userCompanyId,
+      companyName: company?.companyName,
+      companyStatus: company?.companyOperatingStatus,
+      userStatus: x.userStatus,
+    };
+  });
+
+  return { data: associateList };
+};
+
+// get associate details
+let getAssociateDetails = async (req) => {
+  let user = await UsersModel.findOne({
+    where: { userID: req.params.userID },
+    raw: true,
+  });
+  let companyList = await CompanyModel.findAll({
+    raw: true,
+  });
+  let company = companyList.find((x) => x.companyID == user.userCompanyId);
+
+  return {
+    userID: user.userID,
+    userFirstName: user.userFirstName,
+    userLastName: user.userLastName,
+    userEmail: user.userEmail,
+    userMobile: user.userMobile,
+    userCompanyId: user.userCompanyId,
+    companyName: company?.companyName,
+    userCountryCode: user.userCountryCode,
+    userStateCode: user.userStateCode,
+    userCityCode: user.userCityCode,
+    languageID: user.languageID,
+    streetAddress: company?.companyLocations,
+  };
+};
+
 module.exports = {
   Login: Login,
   UsersList: UsersList,
   ChangeUserStatus: ChangeUserStatus,
   UsersDetail: UsersDetail,
   UserUpdate: UserUpdate,
+  craeateBusinessAssociate: craeateBusinessAssociate,
+  getAssociateList,
+  AssociateUpdate,
+  getAssociateDetails,
 };
