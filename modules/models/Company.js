@@ -62,6 +62,18 @@ const CompanyModal = sequelize_mysql.define(
       type: Sequelize.DATE,
       defaultValue: Sequelize.NOW,
     },
+    companyStreet2: {
+      type: Sequelize.STRING,
+      defaultValue: "",
+    },
+    companyPincode: {
+      type: Sequelize.STRING,
+      defaultValue: "",
+    },
+    companyPhoneNumber: {
+      type: Sequelize.STRING,
+      defaultValue: "",
+    },
   },
   {
     tableName: "company",

@@ -234,7 +234,7 @@ let craeateBusinessAssociate = async (req) => {
     "userMobile",
     "languageID",
     "streetAddress",
-    "pinCode",
+    "companyPincode",
     "userCountryCode",
     "userStateCode",
     "userCityCode",
@@ -249,6 +249,9 @@ let craeateBusinessAssociate = async (req) => {
     companyName: body.companyName,
     companyEmail: body.userEmail,
     companyLocations: body.streetAddress,
+    companyStreet2: body.streetAddress2 ? body.streetAddress2 : "",
+    companyPincode: body.companyPincode ? body.companyPincode : "",
+    companyPhoneNumber: body.companyPhoneNumber ? body.companyPhoneNumber : "",
   });
 
   // create hr
@@ -265,11 +268,12 @@ let AssociateUpdate = async (req) => {
   let body = req.body.body ? JSON.parse(req.body.body) : req.body;
 
   [
+    "companyName",
     "userFirstName",
     "userEmail",
     "userMobile",
     "languageID",
-    "pinCode",
+    "streetAddress",
     "userCountryCode",
     "userStateCode",
     "userCityCode",
@@ -287,6 +291,24 @@ let AssociateUpdate = async (req) => {
     where: { userID: req.params.userID },
     raw: true,
   });
+
+  // update company details
+  await CompanyModel.update(
+    {
+      companyName: body.companyName,
+      companyEmail: body.userEmail,
+      companyLocations: body.streetAddress,
+      companyStreet2: body.streetAddress2 ? body.streetAddress2 : "",
+      companyPincode: body.companyPincode ? body.companyPincode : "",
+      companyPhoneNumber: body.companyPhoneNumber
+        ? body.companyPhoneNumber
+        : "",
+    },
+    {
+      where: { companyID: user.userCompanyId },
+      raw: true,
+    }
+  );
 
   return { slides: user };
 };
@@ -345,6 +367,9 @@ let getAssociateDetails = async (req) => {
     userCityCode: user.userCityCode,
     languageID: user.languageID,
     streetAddress: company?.companyLocations,
+    streetAddress2: company?.companyStreet2,
+    companyPincode: company?.companyPincode,
+    companyPhoneNumber: company?.companyPhoneNumber,
   };
 };
 
