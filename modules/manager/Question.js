@@ -10,10 +10,14 @@ let helper = require("../helpers/helpers"),
   QuestionsAnswerModel = require("../models/QuestionsAnswer"),
   QuestionsCommentModel = require("../models/QuestionsComment"),
   QuestionsBookmarkModel = require("../models/QuestionBookmark"),
+  QuestionsAnswersReplyModel = require("../models/QuestionsAnswersReply"),
+  QuestionsAnswerLikeModel = require("../models/QuestionsAnswerLike"),
+  QuestionsAnswerUnlikeModel = require("../models/QuestionsAnswerUnlike"),
   BadRequestError = require("../errors/badRequestError");
 const { v4: uuidv4 } = require("uuid");
 const { use } = require("../routes/Users");
 const VocationModal = require("../models/Vocation");
+const QuestionsAnswersReplyModal = require("../models/QuestionsAnswersReply");
 
 let generateAuthToken = async (phone) => {
   return uuidv4();
@@ -176,7 +180,7 @@ let QuestionList = async (body) => {
           where: {queID : allQuestion[i].queID},
           raw: true
         })
-        
+
       }
       let allQuestionCount = await QuestionModel.count({        
           order: [['queID', 'DESC']],
@@ -494,6 +498,97 @@ let QuestionsUnBookmark = async (req) => {
   
 }
 
+let QuestionsAnswersReply = async (req) => {
+  let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+  if (helper.undefinedOrNull(body)) {
+      throw new BadRequestError("Request body comes empty");
+  }
+  ['queID','userID','answerID','replyAnswer'].forEach(x => {
+      if (!body[x]) {
+          throw new BadRequestError(x + " is required");
+      }
+  });
+
+  // let questionLike = await QuestionLikeModel
+  //     .findOne({ where: {queID : body.queID , userID: body.userID}, raw: true });
+  
+  // if(questionLike) {
+  //   await QuestionLikeModel
+  //   .destroy({ where: {queID : body.queID , userID: body.userID}, raw: true });
+  // }
+
+  let questionsAnswerReplyData = {
+    queID: body.queID,
+    userID: body.userID,
+    answerID: body.answerID,
+    replyAnswer: body.replyAnswer
+  }
+  
+  let ansReplyData = await QuestionsAnswersReplyModel.create(questionsAnswerReplyData);
+
+  return {slides : ansReplyData}; 
+  
+}
+
+let QuestionsAnswerLike = async (req) => {
+  let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+  if (helper.undefinedOrNull(body)) {
+      throw new BadRequestError("Request body comes empty");
+  }
+  ['answerID','userID'].forEach(x => {
+      if (!body[x]) {
+          throw new BadRequestError(x + " is required");
+      }
+  });
+
+  let questionAnswerUnlike = await QuestionsAnswerUnlikeModel
+      .findAll({ where: {answerID : body.answerID , userID: body.userID}, raw: true });
+  
+  if(questionAnswerUnlike) {
+    await QuestionsAnswerUnlikeModel
+    .destroy({ where: {answerID : body.answerID , userID: body.userID}, raw: true });
+  }
+
+  let questionAnswerLikeData = {
+    answerID: body.answerID,
+    userID: body.userID
+  }
+  
+  await QuestionsAnswerLikeModel.create(questionAnswerLikeData);
+
+  return {answerliked : true}; 
+  
+}
+
+let QuestionsAnswerUnlike = async (req) => {
+  let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+  if (helper.undefinedOrNull(body)) {
+      throw new BadRequestError("Request body comes empty");
+  }
+  ['answerID','userID'].forEach(x => {
+      if (!body[x]) {
+          throw new BadRequestError(x + " is required");
+      }
+  });
+
+  let questionAnswerLike = await QuestionsAnswerLikeModel
+      .findOne({ where: {answerID : body.answerID , userID: body.userID}, raw: true });
+  
+  if(questionAnswerLike) {
+    await QuestionsAnswerLikeModel
+    .destroy({ where: {answerID : body.answerID , userID: body.userID}, raw: true });
+  }
+
+  let questionAnswerUnlikeData = {
+    answerID: body.answerID,
+    userID: body.userID
+  }
+  
+  await QuestionsAnswerUnlikeModel.create(questionAnswerUnlikeData);
+
+  return {unliked : true}; 
+}
+
 module.exports = {
   CreateQuestion:CreateQuestion,
   QuestionList:QuestionList,
@@ -503,5 +598,8 @@ module.exports = {
   MyQuestionList:MyQuestionList,
   QuestionsComment:QuestionsComment,
   QuestionsBookmark:QuestionsBookmark,
-  QuestionsUnBookmark:QuestionsUnBookmark
+  QuestionsUnBookmark:QuestionsUnBookmark,
+  QuestionsAnswersReply:QuestionsAnswersReply,
+  QuestionsAnswerLike:QuestionsAnswerLike,
+  QuestionsAnswerUnlike:QuestionsAnswerUnlike
 };

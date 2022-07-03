@@ -15,5 +15,8 @@ router.post("/questionsanswer",controller.QuestionsAnswer);
 router.post("/questionscomment",controller.QuestionsComment);
 router.post("/questionsbookmark",controller.QuestionsBookmark);
 router.post("/questionsunbookmark",controller.QuestionsUnBookmark);
+router.post("/questionsanswerreply",controller.QuestionsAnswersReply);
+router.post("/questionsanswerlike",controller.QuestionsAnswerLike);
+router.post("/questionsanswerunlike",controller.QuestionsAnswerUnlike);
 
 module.exports = router;

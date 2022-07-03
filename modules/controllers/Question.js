@@ -628,6 +628,213 @@ let QuestionsUnBookmark = (req, res, next) => {
         .catch(next);
 }
 
+/**
+ * @swagger
+ * /api/v1/vocation/QuestionList:
+ *   post:
+ *     summary: vocations List.
+ *     tags:
+ *      - Vocation
+ *     parameters :
+ *     - name: x-auth-api-key
+ *       in: header   
+ *       description: an authorization header
+ *       required: true
+ *       type: string 
+ *     - name: Accept-Language
+ *       in: header   
+ *       description: Language
+ *       required: false
+ *       type: string 
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               page:
+ *                 type: string
+ *                 example: 1
+ *                 paramType: body
+ *               limit:
+ *                 type: string
+ *                 example: 2
+ *                 paramType: body
+ *     responses:
+ *       200:
+ *         description: user object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: error in request processing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *                   example: 400
+*/
+let QuestionsAnswersReply = (req, res, next) => {
+    return questionManager
+        .QuestionsAnswersReply(req)
+        .then(data => {
+            let result = {
+                status:200,
+                data: data
+            }
+            return res.json(result);
+        })
+        .catch(next);
+}
+
+/**
+ * @swagger
+ * /api/v1/vocation/QuestionList:
+ *   post:
+ *     summary: vocations List.
+ *     tags:
+ *      - Vocation
+ *     parameters :
+ *     - name: x-auth-api-key
+ *       in: header   
+ *       description: an authorization header
+ *       required: true
+ *       type: string 
+ *     - name: Accept-Language
+ *       in: header   
+ *       description: Language
+ *       required: false
+ *       type: string 
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               page:
+ *                 type: string
+ *                 example: 1
+ *                 paramType: body
+ *               limit:
+ *                 type: string
+ *                 example: 2
+ *                 paramType: body
+ *     responses:
+ *       200:
+ *         description: user object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: error in request processing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *                   example: 400
+*/
+let QuestionsAnswerLike = (req, res, next) => {
+    return questionManager
+        .QuestionsAnswerLike(req)
+        .then(data => {
+            let result = {
+                status:200,
+                data: data
+            }
+            return res.json(result);
+        })
+        .catch(next);
+}
+
+/**
+ * @swagger
+ * /api/v1/vocation/QuestionList:
+ *   post:
+ *     summary: vocations List.
+ *     tags:
+ *      - Vocation
+ *     parameters :
+ *     - name: x-auth-api-key
+ *       in: header   
+ *       description: an authorization header
+ *       required: true
+ *       type: string 
+ *     - name: Accept-Language
+ *       in: header   
+ *       description: Language
+ *       required: false
+ *       type: string 
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               page:
+ *                 type: string
+ *                 example: 1
+ *                 paramType: body
+ *               limit:
+ *                 type: string
+ *                 example: 2
+ *                 paramType: body
+ *     responses:
+ *       200:
+ *         description: user object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: error in request processing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *                   example: 400
+*/
+let QuestionsAnswerUnlike = (req, res, next) => {
+    return questionManager
+        .QuestionsAnswerUnlike(req)
+        .then(data => {
+            let result = {
+                status:200,
+                data: data
+            }
+            return res.json(result);
+        })
+        .catch(next);
+}
+
 module.exports = {
     CreateQuestion: CreateQuestion,
     QuestionList:QuestionList,
@@ -637,5 +844,8 @@ module.exports = {
     QuestionsAnswer: QuestionsAnswer,
     QuestionsComment:QuestionsComment,
     QuestionsBookmark:QuestionsBookmark,
-    QuestionsUnBookmark:QuestionsUnBookmark
+    QuestionsUnBookmark:QuestionsUnBookmark,
+    QuestionsAnswersReply:QuestionsAnswersReply,
+    QuestionsAnswerLike:QuestionsAnswerLike,
+    QuestionsAnswerUnlike:QuestionsAnswerUnlike
  };
