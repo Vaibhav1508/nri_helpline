@@ -7,31 +7,32 @@
  * altered based on environment.
  */
 var config = {
-    /**
-     * server configuration
-     */
-    server: {
-        port: process.env.PORT,
-        networkCallTimeout: 30000,
-    },
-    base_url: process.env.BASE_URL,
-    /**
-     * DB configuration
-     */
-    mysql: {
-        database_name: process.env.DBNAME,
-        user_name: process.env.DBUSER_NAME,
-        password: process.env.DBPASSWORD,
-        host: process.env.DBHOST,
-        port: process.env.DBPORT
-    },
-    upload_folder: 'uploads',
-    upload_entities: {
-        user_images : '/user_image/',
-        vocation_image_folder: "/vocation_image/",
-        sub_vocation_image_folder: "/sub_vocation_image/",
-        user_profile_image_folder: "/userprofile_image/",
-    },    
+  /**
+   * server configuration
+   */
+  server: {
+    port: process.env.PORT,
+    networkCallTimeout: 30000,
+  },
+  base_url: process.env.BASE_URL,
+  /**
+   * DB configuration
+   */
+  mysql: {
+    database_name: process.env.DBNAME,
+    user_name: process.env.DBUSER_NAME,
+    password: process.env.DBPASSWORD,
+    host: process.env.DBHOST,
+    port: process.env.DBPORT,
+  },
+  upload_folder: "uploads",
+  upload_entities: {
+    user_images: "/user_image/",
+    vocation_image_folder: "/vocation_image/",
+    sub_vocation_image_folder: "/sub_vocation_image/",
+    user_profile_image_folder: "/userprofile_image/",
+    hr_kyc_documents_folder: "/hr_kyc_documents/",
+  },
 };
 
 module.exports = config;

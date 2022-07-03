@@ -9,6 +9,8 @@ let helper = require("../helpers/helpers"),
   BadRequestError = require("../errors/badRequestError");
 const { v4: uuidv4 } = require("uuid");
 const CompanyModel = require("../models/Company");
+const mailer = require("../helpers/mail.Helper");
+const config = require("../../config/config");
 
 let generateAuthToken = async (phone) => {
   return uuidv4();
@@ -258,8 +260,29 @@ let craeateBusinessAssociate = async (req) => {
   let hr = await UsersModel.create({
     ...body,
     userLastName: "",
+    userPassword: md5("123456"),
+    userType: "HR",
+    userStatus: "Active",
     userCompanyId: company.companyID,
   });
+
+  // send mail
+  let mailData = {
+    to: body.userEmail,
+    subject: "Welcome to Vocation",
+    html: `<div>
+    <h1>Welcome to Vocation</h1>
+    <p>
+      Hi ${body.userFirstName},<br />
+      <br />
+      Welcome to Vocation. You have successfully registered as a Business Associate.
+      
+      <br />
+      Your Password to login into app is 123456.
+      `,
+  };
+
+  await mailer.sendMail(mailData);
 
   return { status: true };
 };
@@ -355,22 +378,70 @@ let getAssociateDetails = async (req) => {
   let company = companyList.find((x) => x.companyID == user.userCompanyId);
 
   return {
-    userID: user.userID,
-    userFirstName: user.userFirstName,
-    userLastName: user.userLastName,
-    userEmail: user.userEmail,
-    userMobile: user.userMobile,
-    userCompanyId: user.userCompanyId,
-    companyName: company?.companyName,
-    userCountryCode: user.userCountryCode,
-    userStateCode: user.userStateCode,
-    userCityCode: user.userCityCode,
-    languageID: user.languageID,
+    ...user,
     streetAddress: company?.companyLocations,
     streetAddress2: company?.companyStreet2,
     companyPincode: company?.companyPincode,
     companyPhoneNumber: company?.companyPhoneNumber,
+    userGst: `${process.env.BASE_URL}/${config.upload_folder}${config.upload_entities.hr_kyc_documents_folder}${user.userGst}`,
+    userPan: `${process.env.BASE_URL}/${config.upload_folder}${config.upload_entities.hr_kyc_documents_folder}${user.userPan}`,
   };
+};
+
+// upload kyc document
+let uploadKycDocument = async (req) => {
+  let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+  // get files from request
+  let files = req.files;
+
+  // get user id from request
+  let userID = req.body.userID;
+
+  // get user details
+  let user = await UsersModel.findOne({
+    where: { userID: userID },
+    raw: true,
+  });
+
+  // set images in user details
+  user.userGst = files?.GST[0].filename;
+  user.userPan = files?.PAN[0].filename;
+
+  // update user details
+  await UsersModel.update(user, {
+    where: { userID: userID },
+    raw: true,
+  });
+
+  // send mail to notify that document is uploaded
+  let mailData = {
+    to: user.userEmail,
+    subject: "Vocation KYC Document Uploaded",
+    html: `<div>
+    <h1>Vocation KYC Document Uploaded</h1>
+    <p>
+      Hi ${user.userFirstName},<br />
+      <br />
+      Your KYC document has been uploaded successfully.
+      Please wait for the approval from the admin.
+      `,
+    attachments: [
+      {
+        filename: files?.GST[0].filename,
+        content: files?.GST[0].data,
+        contentType: files?.GST[0].mimetype,
+      },
+      {
+        filename: files?.PAN[0].filename,
+        content: files?.PAN[0].data,
+        contentType: files?.PAN[0].mimetype,
+      },
+    ],
+  };
+
+  await mailer.sendMail(mailData);
+
+  return { status: true };
 };
 
 module.exports = {
@@ -383,4 +454,5 @@ module.exports = {
   getAssociateList,
   AssociateUpdate,
   getAssociateDetails,
+  uploadKycDocument,
 };

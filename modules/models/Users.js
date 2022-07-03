@@ -153,6 +153,14 @@ const UsersModal = sequelize_mysql.define(
     userCityCode: {
       type: Sequelize.STRING,
     },
+    userGst: {
+      type: Sequelize.STRING,
+      defaultValue: null,
+    },
+    userPan: {
+      type: Sequelize.STRING,
+      defaultValue: null,
+    },
   },
   {
     freezeTableName: true,

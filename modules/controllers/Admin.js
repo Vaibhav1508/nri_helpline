@@ -422,6 +422,109 @@ let getAssociateList = (req, res, next) => {
     .catch(next);
 };
 
+/**
+ * @swagger
+ * /api/v1/Admin/associate-update/:userID:
+ *   put:
+ *     summary: Associate Update.
+ *     tags:
+ *      - Admin User Management
+ *     parameters :
+ *     - name: x-auth-api-key
+ *       in: header
+ *       description: an authorization header
+ *       required: true
+ *       type: string
+ *     - name: userID
+ *       in: header
+ *       description: an authorization header
+ *       required: true
+ *       type: string
+ *     - name: Accept-Language
+ *       in: header
+ *       description: Language
+ *       required: false
+ *       type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               companyName:
+ *                 type: string
+ *                 example: johm Smith
+ *                 paramType: body
+ *               userFirstName:
+ *                 type: string
+ *                 example: johm Smith
+ *                 paramType: body
+ *               userEmail:
+ *                 type: string
+ *                 example: test@gmail.com
+ *                 paramType: body
+ *               userMobile:
+ *                 type: string
+ *                 example: 9377690348
+ *                 paramType: body
+ *               languageID:
+ *                 type: number
+ *                 example: 1
+ *                 paramType: body
+ *               streetAddress:
+ *                 type: string
+ *                 example: address
+ *                 paramType: body
+ *               companyStreet2:
+ *                 type: string
+ *                 optional: true
+ *                 example: address
+ *                 paramType: body
+ *               companyPincode:
+ *                 type: string
+ *                 example: 110085
+ *                 paramType: body
+ *               companyPhoneNumber:
+ *                 type: string
+ *                 example: 9377690348
+ *                 optional: true
+ *                 paramType: body
+ *               userCountryCode:
+ *                 type: Number
+ *                 example: 91
+ *                 paramType: body
+ *               userStateCode:
+ *                 type: Number
+ *                 example: 91
+ *                 paramType: body
+ *               userCityCode:
+ *                 type: Number
+ *                 example: 91
+ *                 paramType: body
+ *     responses:
+ *       200:
+ *         description: user object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: error in request processing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *                   example: 400
+ */
 let AssociateUpdate = (req, res, next) => {
   return adminManager
     .AssociateUpdate(req)
@@ -448,6 +551,19 @@ let AssociateDetails = (req, res, next) => {
     .catch(next);
 };
 
+let uploadKycDocument = (req, res, next) => {
+  return adminManager
+    .uploadKycDocument(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
 module.exports = {
   Login: Login,
   changePassword: changePassword,
@@ -460,4 +576,5 @@ module.exports = {
   getAssociateList,
   AssociateUpdate,
   AssociateDetails,
+  uploadKycDocument,
 };
