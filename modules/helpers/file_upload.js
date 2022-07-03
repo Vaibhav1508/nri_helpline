@@ -54,6 +54,30 @@ let uploadVocationImage = multer({
   }),
 });
 
+let uploadCountryPicture = multer({
+	storage: multer.diskStorage({
+		destination: function (req, file, callback) {			
+			callback(null, config.upload_folder + config.upload_entities.country_image_folder);
+		},
+		filename: function (req, file, callback) {			
+			let fileName = Date.now() + Math.round(Math.random() * 10000) + '.' + file.originalname.split(".")[file.originalname.split(".").length - 1]
+			callback(null, fileName);
+		}
+	})
+});
+
+let uploadPostImage = multer({
+	storage: multer.diskStorage({
+		destination: function (req, file, callback) {			
+			callback(null, config.upload_folder + config.upload_entities.post_image_folder);
+		},
+		filename: function (req, file, callback) {			
+			let fileName = Date.now() + Math.round(Math.random() * 10000) + '.' + file.originalname.split(".")[file.originalname.split(".").length - 1]
+			callback(null, fileName);
+		}
+	})
+});
+
 let uploadSubVocationImage = multer({
   storage: multer.diskStorage({
     destination: function (req, file, callback) {
@@ -125,4 +149,6 @@ module.exports = {
   uploadVocationImage: uploadVocationImage,
   uploadSubVocationImage: uploadSubVocationImage,
   uploadHrKycDocuments,
+  uploadCountryPicture:uploadCountryPicture,
+  uploadPostImage:uploadPostImage
 };

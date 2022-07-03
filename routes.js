@@ -24,6 +24,8 @@ module.exports = app => {
     app.use('/api/v1/vocation', require('./modules/routes/Vocation'));
     app.use('/api/v1/Industry', require('./modules/routes/Industry'));
     app.use('/api/v1/User', require('./modules/routes/Users'));
+    app.use('/api/v1/Question', require('./modules/routes/Question'));
+    app.use('/api/v1/Master', require('./modules/routes/Master'));
 
     // app.use('/api/v1/country', require('./modules/routes/Country'));
 
