@@ -633,6 +633,19 @@ let CompanyDetails = (req, res, next) => {
     .catch(next);
 };
 
+let UpdateCompanyDetails = (req, res, next) => {
+  return userManager
+    .updateCompanyDetails(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
 module.exports = {
   Login: Login,
   changePassword: changePassword,
@@ -645,4 +658,5 @@ module.exports = {
   ProfileSetup: ProfileSetup,
   UserUpdate: UserUpdate,
   CompanyDetails,
+  UpdateCompanyDetails,
 };

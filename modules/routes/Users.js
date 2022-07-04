@@ -24,6 +24,11 @@ router.put(
   helper.userProfilePicture.single("userProfilePicture"),
   controller.UserUpdate
 );
+router.put(
+  "/update-company/:companyId",
+  helper.uploadCompnayProfilePicture.single("companyLogo"),
+  controller.UpdateCompanyDetails
+);
 router.post("/company-details", controller.CompanyDetails);
 
 module.exports = router;

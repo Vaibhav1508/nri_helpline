@@ -33,7 +33,8 @@ var config = {
     user_profile_image_folder: "/userprofile_image/",
     hr_kyc_documents_folder: "/hr_kyc_documents/",
     country_image_folder: "/country_image/",
-    post_image_folder: "/post_image/"
+    post_image_folder: "/post_image/",
+    compnay_image_folder: "/company_image/",
   },
 };
 

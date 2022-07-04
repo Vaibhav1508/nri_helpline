@@ -465,10 +465,57 @@ let CompanyDetails = async (req) => {
   if (!CompanyDetails) {
     throw new BadRequestError("Company does not exist");
   }
+  if (CompanyDetails.companyLogo) {
+    CompanyDetails.companyLogo = `${process.env.BASE_URL}/${config.upload_folder}/${config.upload_entities.compnay_image_folder}/${CompanyDetails.companyLogo}`;
+  }
+
   return {
     ...CompanyDetails,
-    companyIndustries: industry.industryName,
+    companyIndustries: industry?.industryName,
   };
+};
+
+let updateCompanyDetails = async (req) => {
+  let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+
+  [
+    "companyName",
+    "companyIndustries",
+    "companyWebsite",
+    "companyEmail",
+    "companyAbout",
+    "companyEmployeesNo",
+    "companyFounders",
+    "companyOperatingHours",
+  ].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
+  });
+
+  if (req.file && req.file.path) {
+    body["companyLogo"] = req.file.filename;
+  }
+  await CompanyModal.update(body, {
+    where: { companyId: req.params.companyId },
+    raw: true,
+  });
+  let company = await CompanyModal.findOne({
+    where: { companyId: req.params.companyId },
+    raw: true,
+  });
+  let industry = await IndustryModel.findOne({
+    where: { industryID: company.companyIndustries },
+    raw: true,
+  });
+
+  company.companyIndustries = industry?.industryName;
+  company.companyLogo =
+    config.upload_folder +
+    config.upload_entities.company_logo_folder +
+    company.companyLogo;
+
+  return { company };
 };
 
 module.exports = {
@@ -483,4 +530,5 @@ module.exports = {
   ProfileSetup: ProfileSetup,
   UserUpdate: UserUpdate,
   CompanyDetails,
+  updateCompanyDetails,
 };

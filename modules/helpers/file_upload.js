@@ -55,27 +55,41 @@ let uploadVocationImage = multer({
 });
 
 let uploadCountryPicture = multer({
-	storage: multer.diskStorage({
-		destination: function (req, file, callback) {			
-			callback(null, config.upload_folder + config.upload_entities.country_image_folder);
-		},
-		filename: function (req, file, callback) {			
-			let fileName = Date.now() + Math.round(Math.random() * 10000) + '.' + file.originalname.split(".")[file.originalname.split(".").length - 1]
-			callback(null, fileName);
-		}
-	})
+  storage: multer.diskStorage({
+    destination: function (req, file, callback) {
+      callback(
+        null,
+        config.upload_folder + config.upload_entities.country_image_folder
+      );
+    },
+    filename: function (req, file, callback) {
+      let fileName =
+        Date.now() +
+        Math.round(Math.random() * 10000) +
+        "." +
+        file.originalname.split(".")[file.originalname.split(".").length - 1];
+      callback(null, fileName);
+    },
+  }),
 });
 
 let uploadPostImage = multer({
-	storage: multer.diskStorage({
-		destination: function (req, file, callback) {			
-			callback(null, config.upload_folder + config.upload_entities.post_image_folder);
-		},
-		filename: function (req, file, callback) {			
-			let fileName = Date.now() + Math.round(Math.random() * 10000) + '.' + file.originalname.split(".")[file.originalname.split(".").length - 1]
-			callback(null, fileName);
-		}
-	})
+  storage: multer.diskStorage({
+    destination: function (req, file, callback) {
+      callback(
+        null,
+        config.upload_folder + config.upload_entities.post_image_folder
+      );
+    },
+    filename: function (req, file, callback) {
+      let fileName =
+        Date.now() +
+        Math.round(Math.random() * 10000) +
+        "." +
+        file.originalname.split(".")[file.originalname.split(".").length - 1];
+      callback(null, fileName);
+    },
+  }),
 });
 
 let uploadSubVocationImage = multer({
@@ -143,12 +157,32 @@ let uploadHrKycDocuments = multer({
   { name: "PAN", maxCount: 1 },
 ]);
 
+let uploadCompnayProfilePicture = multer({
+  storage: multer.diskStorage({
+    destination: function (req, file, callback) {
+      callback(
+        null,
+        config.upload_folder + config.upload_entities.compnay_image_folder
+      );
+    },
+    filename: function (req, file, callback) {
+      let fileName =
+        Date.now() +
+        Math.round(Math.random() * 10000) +
+        "." +
+        file.originalname.split(".")[file.originalname.split(".").length - 1];
+      callback(null, fileName);
+    },
+  }),
+});
+
 module.exports = {
   userProfilePicture: userProfilePicture,
   uploadReceiverImage: uploadReceiverImage,
   uploadVocationImage: uploadVocationImage,
   uploadSubVocationImage: uploadSubVocationImage,
-  uploadHrKycDocuments,
-  uploadCountryPicture:uploadCountryPicture,
-  uploadPostImage:uploadPostImage
+  uploadHrKycDocuments: uploadHrKycDocuments,
+  uploadCountryPicture: uploadCountryPicture,
+  uploadPostImage: uploadPostImage,
+  uploadCompnayProfilePicture: uploadCompnayProfilePicture,
 };
