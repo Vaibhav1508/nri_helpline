@@ -14,6 +14,7 @@ let helper = require("../helpers/helpers"),
 const { v4: uuidv4 } = require("uuid");
 const { use } = require("../routes/Users");
 const VocationModal = require("../models/Vocation");
+const CompanyModal = require("../models/Company");
 
 let generateAuthToken = async (phone) => {
   return uuidv4();
@@ -443,6 +444,33 @@ let UserUpdate = async (req) => {
   return { slides: user };
 };
 
+let CompanyDetails = async (req) => {
+  let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+
+  ["userCompanyId"].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
+  });
+
+  let CompanyDetails = await CompanyModal.findOne({
+    where: { companyId: body.userCompanyId },
+    raw: true,
+  });
+
+  let industry = await IndustryModel.findOne({
+    where: { industryID: CompanyDetails.companyIndustries },
+  });
+
+  if (!CompanyDetails) {
+    throw new BadRequestError("Company does not exist");
+  }
+  return {
+    ...CompanyDetails,
+    companyIndustries: industry.industryName,
+  };
+};
+
 module.exports = {
   Login: Login,
   signout: signout,
@@ -454,4 +482,5 @@ module.exports = {
   SetNewPassword: SetNewPassword,
   ProfileSetup: ProfileSetup,
   UserUpdate: UserUpdate,
+  CompanyDetails,
 };

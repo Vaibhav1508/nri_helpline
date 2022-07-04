@@ -21,12 +21,12 @@ router.post("/createassociate", controller.createBussinessAssociate);
 router.post("/associateList", controller.getAssociateList);
 router.get("/associate/:userID", controller.AssociateDetails);
 router.post("/associate-update/:userID", controller.AssociateUpdate);
+router.post("/approve-hr", controller.ApproveHr);
+router.post("/reject-hr", controller.RejectHr);
 router.post(
   "/kyc-document",
   helper.uploadHrKycDocuments,
   controller.uploadKycDocument
 );
-
-// router.post("/register",controller.register);
 
 module.exports = router;

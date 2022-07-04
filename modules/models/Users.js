@@ -161,6 +161,10 @@ const UsersModal = sequelize_mysql.define(
       type: Sequelize.STRING,
       defaultValue: null,
     },
+    userDocumentRejectionReason: {
+      type: Sequelize.STRING,
+      defaultValue: null,
+    },
   },
   {
     freezeTableName: true,

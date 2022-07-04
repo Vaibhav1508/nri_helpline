@@ -380,11 +380,16 @@ let getAssociateDetails = async (req) => {
   return {
     ...user,
     streetAddress: company?.companyLocations,
+    companyName: company?.companyName,
     streetAddress2: company?.companyStreet2,
     companyPincode: company?.companyPincode,
     companyPhoneNumber: company?.companyPhoneNumber,
-    userGst: `${process.env.BASE_URL}/${config.upload_folder}${config.upload_entities.hr_kyc_documents_folder}${user.userGst}`,
-    userPan: `${process.env.BASE_URL}/${config.upload_folder}${config.upload_entities.hr_kyc_documents_folder}${user.userPan}`,
+    userGst: user.userGst
+      ? `${process.env.BASE_URL}/${config.upload_folder}${config.upload_entities.hr_kyc_documents_folder}${user.userGst}`
+      : "",
+    userPan: user.userPan
+      ? `${process.env.BASE_URL}/${config.upload_folder}${config.upload_entities.hr_kyc_documents_folder}${user.userPan}`
+      : "",
   };
 };
 
@@ -444,6 +449,101 @@ let uploadKycDocument = async (req) => {
   return { status: true };
 };
 
+// Approve and reject associate
+let ApproveHr = async (req) => {
+  let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+
+  // get user details
+  let user = await UsersModel.findOne({
+    where: { userID: body.userID },
+    raw: true,
+  });
+
+  // update user details
+  await UsersModel.update(
+    {
+      userDocumentVerified: "Yes",
+    },
+    {
+      where: { userID: body.userID },
+      raw: true,
+    }
+  );
+
+  // send mail to notify that document is uploaded
+  let mailData = {
+    to: user.userEmail,
+    subject: "Vocation KYC Document Approved",
+    html: `
+    <div>
+    <h1>Vocation KYC Document Approved</h1>
+    <p>
+      Hi ${user.userFirstName},<br />
+      <br />
+      Your KYC document has been approved.
+    </p>
+    </div>
+    `,
+  };
+
+  await mailer.sendMail(mailData);
+
+  return { status: true };
+};
+
+let RejectHr = async (req) => {
+  let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+
+  ["userID", "reason"].forEach((x) => {
+    if (!body[x]) {
+      throw new Error(`${x} is required`);
+    }
+  });
+
+  // get user details
+  let user = await UsersModel.findOne({
+    where: { userID: body.userID },
+    raw: true,
+  });
+
+  // update user details
+  await UsersModel.update(
+    {
+      userDocumentVerified: "No",
+      userDocumentRejectionReason: body.reason,
+      userGst: null,
+      userPan: null,
+    },
+    {
+      where: { userID: body.userID },
+      raw: true,
+    }
+  );
+
+  // send mail to notify that document is uploaded
+  let mailData = {
+    to: user.userEmail,
+    subject: "Vocation KYC Document Rejected",
+    html: `
+    <div>
+    <h1>Vocation KYC Document Rejected</h1>
+    <p>
+      Hi ${user.userFirstName},<br />
+      <br />
+      Your KYC document has been rejected.
+      <br />
+      <br />
+      Reason: ${body.reason}
+    </p>
+    </div>
+    `,
+  };
+
+  await mailer.sendMail(mailData);
+
+  return { status: true };
+};
+
 module.exports = {
   Login: Login,
   UsersList: UsersList,
@@ -455,4 +555,6 @@ module.exports = {
   AssociateUpdate,
   getAssociateDetails,
   uploadKycDocument,
+  ApproveHr,
+  RejectHr,
 };

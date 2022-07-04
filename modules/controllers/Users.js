@@ -1,8 +1,6 @@
+let userManager = require("../manager/Users");
 
-
- let userManager = require('../manager/Users');
-
-  /**
+/**
  * @swagger
  * /api/v1/auth/login:
  *   post:
@@ -11,15 +9,15 @@
  *      - Login/Register
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -57,21 +55,21 @@
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
- let Login = (req, res, next) => {
-     return userManager
-         .Login(req.body)
-         .then(data => {
-             let result = {
-                 status:200,
-                 data: data
-             }
-             return res.json(result);
-         })
-         .catch(next);
- } 
+ */
+let Login = (req, res, next) => {
+  return userManager
+    .Login(req.body)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
- /**
+/**
  * @swagger
  * /api/v1/auth/register:
  *   post:
@@ -80,15 +78,15 @@
  *      - Login/Register
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -146,19 +144,19 @@
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let register = (req, res, next) => {
-    return userManager
-        .register(req.body)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-} 
+  return userManager
+    .register(req.body)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
 /**
  * @swagger
@@ -169,15 +167,15 @@ let register = (req, res, next) => {
  *      - Login/Register
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -215,19 +213,19 @@ let register = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let VerifyOtp = (req, res, next) => {
-    return userManager
-        .VerifyOtp(req.body)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-} 
+  return userManager
+    .VerifyOtp(req.body)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
 /**
  * @swagger
@@ -238,15 +236,15 @@ let VerifyOtp = (req, res, next) => {
  *      - Login/Register
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -280,19 +278,19 @@ let VerifyOtp = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let ResendOtp = (req, res, next) => {
-    return userManager
-        .ResendOtp(req.body)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-} 
+  return userManager
+    .ResendOtp(req.body)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
 /**
  * @swagger
@@ -303,15 +301,15 @@ let ResendOtp = (req, res, next) => {
  *      - Login/Register
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -345,19 +343,19 @@ let ResendOtp = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let ForgetPassword = (req, res, next) => {
-    return userManager
-        .ForgetPassword(req.body)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-} 
+  return userManager
+    .ForgetPassword(req.body)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
 /**
  * @swagger
@@ -368,20 +366,20 @@ let ForgetPassword = (req, res, next) => {
  *      - Login/Register
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: token
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
  *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -419,19 +417,19 @@ let ForgetPassword = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let SetNewPassword = (req, res, next) => {
-    return userManager
-        .SetNewPassword(req)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-} 
+  return userManager
+    .SetNewPassword(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
 /**
  * @swagger
@@ -442,20 +440,20 @@ let SetNewPassword = (req, res, next) => {
  *      - User
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: token
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
  *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -497,50 +495,50 @@ let SetNewPassword = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let ProfileSetup = (req, res, next) => {
-    return userManager
-        .ProfileSetup(req.body)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-} 
+  return userManager
+    .ProfileSetup(req.body)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
- let changePassword = (req, res, next) => {
-    let adminid = req.admin ? req.admin.adminid : null;
-    return userManager
-        .changePassword(adminid,req.body)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-} 
- 
- let signout = (req,res,next) => {
-     let adminid = req.admin ? req.admin.adminid : null;
-     let authToken = req.get('x-auth-token');
- 
-     return userManager
-         .signout(adminid,authToken)
-         .then(data => {
-             let result = {
-                 status:200
-             }
-             return res.json(result);
-         })
-         .catch(next);
- }
+let changePassword = (req, res, next) => {
+  let adminid = req.admin ? req.admin.adminid : null;
+  return userManager
+    .changePassword(adminid, req.body)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
- /**
+let signout = (req, res, next) => {
+  let adminid = req.admin ? req.admin.adminid : null;
+  let authToken = req.get("x-auth-token");
+
+  return userManager
+    .signout(adminid, authToken)
+    .then((data) => {
+      let result = {
+        status: 200,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+/**
  * @swagger
  * /api/v1/User/user-update/:userID:
  *   put:
@@ -549,20 +547,20 @@ let ProfileSetup = (req, res, next) => {
  *      - Web User
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: userID
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
  *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -608,33 +606,43 @@ let ProfileSetup = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let UserUpdate = (req, res, next) => {
-    return userManager
-        .UserUpdate(req)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-} 
- 
+  return userManager
+    .UserUpdate(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
- 
- 
- 
- module.exports = {
-    Login           : Login,  
-    changePassword:changePassword, 
-    signout          : signout,
-    register : register,
-    VerifyOtp : VerifyOtp,
-    ResendOtp: ResendOtp,
-    ForgetPassword : ForgetPassword,
-    SetNewPassword : SetNewPassword,
-    ProfileSetup : ProfileSetup,
-    UserUpdate:UserUpdate
- };
+let CompanyDetails = (req, res, next) => {
+  return userManager
+    .CompanyDetails(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+module.exports = {
+  Login: Login,
+  changePassword: changePassword,
+  signout: signout,
+  register: register,
+  VerifyOtp: VerifyOtp,
+  ResendOtp: ResendOtp,
+  ForgetPassword: ForgetPassword,
+  SetNewPassword: SetNewPassword,
+  ProfileSetup: ProfileSetup,
+  UserUpdate: UserUpdate,
+  CompanyDetails,
+};

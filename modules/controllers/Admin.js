@@ -564,6 +564,31 @@ let uploadKycDocument = (req, res, next) => {
     .catch(next);
 };
 
+let ApproveHr = (req, res, next) => {
+  return adminManager
+    .ApproveHr(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+let RejectHr = (req, res, next) => {
+  return adminManager
+    .RejectHr(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
 module.exports = {
   Login: Login,
   changePassword: changePassword,
@@ -577,4 +602,6 @@ module.exports = {
   AssociateUpdate,
   AssociateDetails,
   uploadKycDocument,
+  ApproveHr,
+  RejectHr,
 };
