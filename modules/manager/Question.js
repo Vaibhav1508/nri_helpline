@@ -26,40 +26,42 @@ let generateAuthToken = async (phone) => {
 let CreateQuestion = async (req) => {
   let body = req.body.body ? JSON.parse(req.body.body) : req.body;
   if (helper.undefinedOrNull(body)) {
-      throw new BadRequestError("Request body comes empty");
+    throw new BadRequestError("Request body comes empty");
   }
-  ['queQuestion','queDescription','queType','queMode','vocationID'].forEach(x => {
+  ["queQuestion", "queDescription", "queType", "queMode", "vocationID"].forEach(
+    (x) => {
       if (!body[x]) {
-          throw new BadRequestError(x + " is required");
+        throw new BadRequestError(x + " is required");
       }
+    }
+  );
+
+  let question = await QuestionModel.findOne({
+    where: { queQuestion: body.queQuestion },
+    raw: true,
   });
 
-  let question = await QuestionModel
-      .findOne({ where: {queQuestion: body.queQuestion}, raw: true });
-  
-  if(question) {
-      throw new BadRequestError("Question already exists");
+  if (question) {
+    throw new BadRequestError("Question already exists");
   }
 
-  let questionData = {}
-  if(body?.queType == 'Question') {
+  let questionData = {};
+  if (body?.queType == "Question") {
     questionData = {
       queQuestion: body.queQuestion,
       queDescription: body.queDescription,
       queType: body.queType,
       queMode: body.queMode,
-      vocationID: body.vocationID
-    }
+      vocationID: body.vocationID,
+    };
   } else {
     let filename = "";
     try {
-        filename = req.file.filename;
-    }
-    catch (error) {
-    }
-  
+      filename = req.file.filename;
+    } catch (error) {}
+
     if (!filename) {
-        throw new BadRequestError('Upload Any Image');
+      throw new BadRequestError("Upload Any Image");
     }
 
     questionData = {
@@ -68,215 +70,250 @@ let CreateQuestion = async (req) => {
       queDescription: body.queDescription,
       queType: body.queType,
       queMode: body.queMode,
-    }
+    };
   }
 
   let questionDetail = await QuestionModel.create(questionData);
 
-  if(body?.queType == 'Post') {
-    questionDetail.queQuestion = config.upload_folder + config.upload_entities.post_image_folder + questionDetail.queQuestion;
+  if (body?.queType == "Post") {
+    questionDetail.queQuestion =
+      config.upload_folder +
+      config.upload_entities.post_image_folder +
+      questionDetail.queQuestion;
   }
 
-  return {slides : questionDetail};
-}
+  // emit realTimeFeed event to all users
+  let realTimeFeed = {
+    type: "realTimeFeed",
+    data: {
+      type: "question",
+      data: questionDetail,
+    },
+  };
+  req.io.broadcast("realTimeFeed", realTimeFeed);
+
+  return { slides: questionDetail };
+};
 
 let QuestionList = async (body) => {
-  let limit = (body.limit) ? parseInt(body.limit) : 10;
+  let limit = body.limit ? parseInt(body.limit) : 10;
   let page = body.page || 1;
   let offset = (page - 1) * limit;
-  let findData = {queStatus : 'Active'}
-      if (body.filters) {
-        if (body.filters.searchtext) {
-          findData["$and"] = [
-            {queType: {$like: '%' + body.filters.searchtext + '%'}},
-            {queDescription: {$like: '%' + body.filters.searchtext + '%'}}
-          ]
-        }
+  let findData = { queStatus: "Active" };
+  if (body.filters) {
+    if (body.filters.searchtext) {
+      findData["$and"] = [
+        { queType: { $like: "%" + body.filters.searchtext + "%" } },
+        { queDescription: { $like: "%" + body.filters.searchtext + "%" } },
+      ];
+    }
+  }
+  if (body.page || body.limit) {
+    let allQuestion = await QuestionModel.findAll({
+      where: findData,
+      limit,
+      offset,
+      order: [["queID", "DESC"]],
+      raw: true,
+    });
+
+    for (let i = 0; i < allQuestion.length; i++) {
+      if (allQuestion[i].queType == "Post") {
+        allQuestion[i].queQuestion =
+          config.upload_folder +
+          config.upload_entities.post_image_folder +
+          allQuestion[i].queQuestion;
       }
-  if(body.page || body.limit) {
-     let allQuestion = await QuestionModel.findAll({
-          where: findData,
-          limit,
-          offset,
-          order: [['queID', 'DESC']],
-          raw: true
+
+      allQuestion[i].queTotalAnswerCount = await QuestionsAnswerModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
       });
 
-      
-      for(let i=0 ; i<allQuestion.length; i++) {
-        if(allQuestion[i].queType == 'Post') {
-          allQuestion[i].queQuestion = config.upload_folder + config.upload_entities.post_image_folder + allQuestion[i].queQuestion;
+      allQuestion[i].queTotalLikeCount = await QuestionLikeModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
+      });
+
+      allQuestion[i].queTotalDislikeCount = await QuestionUnlikeModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
+      });
+
+      allQuestion[i].queTotalBookmarkCount = await QuestionsBookmarkModel.count(
+        {
+          where: { queID: allQuestion[i].queID },
+          raw: true,
         }
+      );
 
-        allQuestion[i].queTotalAnswerCount = await QuestionsAnswerModel.count({
-          where: {queID : allQuestion[i].queID},
-          raw: true
-        })
+      allQuestion[i].queTotalCommentCount = await QuestionsCommentModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
+      });
+    }
+    let allQuestionCount = await QuestionModel.count({
+      where: findData,
+      order: [["queID", "DESC"]],
+      raw: true,
+    });
 
-        allQuestion[i].queTotalLikeCount = await QuestionLikeModel.count({
-          where: {queID : allQuestion[i].queID},
-          raw: true
-        })
-
-        allQuestion[i].queTotalDislikeCount = await QuestionUnlikeModel.count({
-          where: {queID : allQuestion[i].queID},
-          raw: true
-        })
-
-        allQuestion[i].queTotalBookmarkCount = await QuestionsBookmarkModel.count({
-          where: {queID : allQuestion[i].queID},
-          raw: true
-        })
-
-        allQuestion[i].queTotalCommentCount = await QuestionsCommentModel.count({
-          where: {queID : allQuestion[i].queID},
-          raw: true
-        })
-
+    let _result = { total_count: 0 };
+    _result.slides = allQuestion;
+    _result.total_count = allQuestionCount;
+    return _result;
+  } else {
+    let allQuestion = await QuestionModel.findAll({
+      where: findData,
+      order: [["queID", "DESC"]],
+      raw: true,
+    });
+    for (let i = 0; i < allQuestion.length; i++) {
+      if (allQuestion[i].queType == "Post") {
+        allQuestion[i].queQuestion =
+          config.upload_folder +
+          config.upload_entities.post_image_folder +
+          allQuestion[i].queQuestion;
       }
-      let allQuestionCount = await QuestionModel.count({   
-          where: findData,     
-          order: [['queID', 'DESC']],
-          raw: true
+
+      allQuestion[i].queTotalAnswerCount = await QuestionsAnswerModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
       });
 
-
-      let _result = { total_count: 0 };
-      _result.slides = allQuestion;
-      _result.total_count = allQuestionCount;
-      return _result;
-  }   else {
-      let allQuestion = await QuestionModel.findAll({
-          where: findData,
-          order: [['queID', 'DESC']],
-          raw: true
+      allQuestion[i].queTotalLikeCount = await QuestionLikeModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
       });
-      for(let i=0 ; i<allQuestion.length; i++) {
-        if(allQuestion[i].queType == 'Post') {
-          allQuestion[i].queQuestion = config.upload_folder + config.upload_entities.post_image_folder + allQuestion[i].queQuestion;
+
+      allQuestion[i].queTotalDislikeCount = await QuestionUnlikeModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
+      });
+
+      allQuestion[i].queTotalBookmarkCount = await QuestionsBookmarkModel.count(
+        {
+          where: { queID: allQuestion[i].queID },
+          raw: true,
         }
+      );
 
-        allQuestion[i].queTotalAnswerCount = await QuestionsAnswerModel.count({
-          where: {queID : allQuestion[i].queID},
-          raw: true
-        })
-
-        allQuestion[i].queTotalLikeCount = await QuestionLikeModel.count({
-          where: {queID : allQuestion[i].queID},
-          raw: true
-        })
-
-        allQuestion[i].queTotalDislikeCount = await QuestionUnlikeModel.count({
-          where: {queID : allQuestion[i].queID},
-          raw: true
-        })
-
-        allQuestion[i].queTotalBookmarkCount = await QuestionsBookmarkModel.count({
-          where: {queID : allQuestion[i].queID},
-          raw: true
-        })
-
-        allQuestion[i].queTotalCommentCount = await QuestionsCommentModel.count({
-          where: {queID : allQuestion[i].queID},
-          raw: true
-        })
-
-      }
-      let allQuestionCount = await QuestionModel.count({        
-          order: [['queID', 'DESC']],
-          raw: true
+      allQuestion[i].queTotalCommentCount = await QuestionsCommentModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
       });
-      let _result = { total_count: 0 };
-      _result.slides = allQuestion;
-      _result.total_count = allQuestionCount;
-      return _result;
-  } 
-  
-}
+    }
+    let allQuestionCount = await QuestionModel.count({
+      order: [["queID", "DESC"]],
+      raw: true,
+    });
+    let _result = { total_count: 0 };
+    _result.slides = allQuestion;
+    _result.total_count = allQuestionCount;
+    return _result;
+  }
+};
 
 let QuestionLike = async (req) => {
   let body = req.body.body ? JSON.parse(req.body.body) : req.body;
   if (helper.undefinedOrNull(body)) {
-      throw new BadRequestError("Request body comes empty");
+    throw new BadRequestError("Request body comes empty");
   }
-  ['queID','userID'].forEach(x => {
-      if (!body[x]) {
-          throw new BadRequestError(x + " is required");
-      }
+  ["queID", "userID"].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
   });
 
-  let question = await QuestionModel
-      .findOne({ where: {queID : body.queID , userID: body.userID}, raw: true });
+  let question = await QuestionModel.findOne({
+    where: { queID: body.queID, userID: body.userID },
+    raw: true,
+  });
 
-  let questionUnlike = await QuestionUnlikeModel
-      .findOne({ where: {queID : body.queID , userID: body.userID}, raw: true });
-  
-  if(questionUnlike) {
-    await QuestionUnlikeModel
-    .destroy({ where: {queID : body.queID , userID: body.userID}, raw: true });
+  let questionUnlike = await QuestionUnlikeModel.findOne({
+    where: { queID: body.queID, userID: body.userID },
+    raw: true,
+  });
+
+  if (questionUnlike) {
+    await QuestionUnlikeModel.destroy({
+      where: { queID: body.queID, userID: body.userID },
+      raw: true,
+    });
   }
 
   let questionLikeData = {
     queID: body.queID,
-    userID: body.userID
-  }
-  
+    userID: body.userID,
+  };
+
   await QuestionLikeModel.create(questionLikeData);
-  await QuestionModel.update({queLikeCount : Number(question?.queLikeCount) + 1}, {where: { queID: body.queID, userID : body.userID }});
+  await QuestionModel.update(
+    { queLikeCount: Number(question?.queLikeCount) + 1 },
+    { where: { queID: body.queID, userID: body.userID } }
+  );
 
-
-  return {liked : true}; 
-  
-}
+  return { liked: true };
+};
 
 let QuestionUnlike = async (req) => {
   let body = req.body.body ? JSON.parse(req.body.body) : req.body;
   if (helper.undefinedOrNull(body)) {
-      throw new BadRequestError("Request body comes empty");
+    throw new BadRequestError("Request body comes empty");
   }
-  ['queID','userID'].forEach(x => {
-      if (!body[x]) {
-          throw new BadRequestError(x + " is required");
-      }
+  ["queID", "userID"].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
   });
 
-  let question = await QuestionModel
-      .findOne({ where: {queID : body.queID , userID: body.userID}, raw: true });
+  let question = await QuestionModel.findOne({
+    where: { queID: body.queID, userID: body.userID },
+    raw: true,
+  });
 
-  let questionLike = await QuestionLikeModel
-      .findOne({ where: {queID : body.queID , userID: body.userID}, raw: true });
-  
-  if(questionLike) {
-    await QuestionLikeModel
-    .destroy({ where: {queID : body.queID , userID: body.userID}, raw: true });
+  let questionLike = await QuestionLikeModel.findOne({
+    where: { queID: body.queID, userID: body.userID },
+    raw: true,
+  });
+
+  if (questionLike) {
+    await QuestionLikeModel.destroy({
+      where: { queID: body.queID, userID: body.userID },
+      raw: true,
+    });
   }
 
   let questionUnlikeData = {
     queID: body.queID,
-    userID: body.userID
-  }
-  
-  await QuestionUnlikeModel.create(questionUnlikeData);
-  await QuestionModel.update({queDislikeCount : Number(question?.queDislikeCount) + 1}, {where: { queID: body.queID, userID : body.userID }});
+    userID: body.userID,
+  };
 
-  return {unliked : true}; 
-  
-}
+  await QuestionUnlikeModel.create(questionUnlikeData);
+  await QuestionModel.update(
+    { queDislikeCount: Number(question?.queDislikeCount) + 1 },
+    { where: { queID: body.queID, userID: body.userID } }
+  );
+
+  return { unliked: true };
+};
 
 let QuestionsAnswer = async (req) => {
   let body = req.body.body ? JSON.parse(req.body.body) : req.body;
   if (helper.undefinedOrNull(body)) {
-      throw new BadRequestError("Request body comes empty");
+    throw new BadRequestError("Request body comes empty");
   }
-  ['queID','userID','answerAnswer'].forEach(x => {
-      if (!body[x]) {
-          throw new BadRequestError(x + " is required");
-      }
+  ["queID", "userID", "answerAnswer"].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
   });
 
-  let question = await QuestionModel
-      .findOne({ where: {queID : body.queID , userID: body.userID}, raw: true });
-  
+  let question = await QuestionModel.findOne({
+    where: { queID: body.queID, userID: body.userID },
+    raw: true,
+  });
+
   // if(questionLike) {
   //   await QuestionLikeModel
   //   .destroy({ where: {queID : body.queID , userID: body.userID}, raw: true });
@@ -285,143 +322,152 @@ let QuestionsAnswer = async (req) => {
   let questionsAnswerData = {
     queID: body.queID,
     userID: body.userID,
-    answerAnswer: body.answerAnswer
-  }
-  
-  let answerData = await QuestionsAnswerModel.create(questionsAnswerData);
-  await QuestionModel.update({queAnswerCount : Number(question?.queAnswerCount) + 1}, {where: { queID: body.queID, userID : body.userID }});
+    answerAnswer: body.answerAnswer,
+  };
 
-  return {slides : answerData}; 
-  
-}
+  let answerData = await QuestionsAnswerModel.create(questionsAnswerData);
+  await QuestionModel.update(
+    { queAnswerCount: Number(question?.queAnswerCount) + 1 },
+    { where: { queID: body.queID, userID: body.userID } }
+  );
+
+  return { slides: answerData };
+};
 
 let MyQuestionList = async (body) => {
-  let limit = (body.limit) ? parseInt(body.limit) : 10;
+  let limit = body.limit ? parseInt(body.limit) : 10;
   let page = body.page || 1;
   let offset = (page - 1) * limit;
-  let findData = {queStatus : 'Active'}
-      if (body.filters) {
-        if (body.filters.searchtext) {
-          findData["$and"] = [
-            {userID: {$like: '%' + body.filters.userID + '%'}}, // Check from frontend userID is passed from filter or at outer side of filter
-          ]
-        } else {
-          findData["$and"] = [
-            {userID: {$like: '%' + body.userID + '%'}}, // Check from frontend userID is passed from filter or at outer side of filter
-          ]
-        }
+  let findData = { queStatus: "Active" };
+  if (body.filters) {
+    if (body.filters.searchtext) {
+      findData["$and"] = [
+        { userID: { $like: "%" + body.filters.userID + "%" } }, // Check from frontend userID is passed from filter or at outer side of filter
+      ];
+    } else {
+      findData["$and"] = [
+        { userID: { $like: "%" + body.userID + "%" } }, // Check from frontend userID is passed from filter or at outer side of filter
+      ];
+    }
+  }
+  if (body.page || body.limit) {
+    let allQuestion = await QuestionModel.findAll({
+      where: findData,
+      limit,
+      offset,
+      order: [["queID", "DESC"]],
+      raw: true,
+    });
+    for (let i = 0; i < allQuestion.length; i++) {
+      if (allQuestion[i].queType == "Post") {
+        allQuestion[i].queQuestion =
+          config.upload_folder +
+          config.upload_entities.post_image_folder +
+          allQuestion[i].queQuestion;
       }
-  if(body.page || body.limit) {
-     let allQuestion = await QuestionModel.findAll({
-          where: findData,
-          limit,
-          offset,
-          order: [['queID', 'DESC']],
-          raw: true
+
+      allQuestion[i].queTotalAnswerCount = await QuestionsAnswerModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
       });
-      for(let i=0 ; i<allQuestion.length; i++) {
-        if(allQuestion[i].queType == 'Post') {
-          allQuestion[i].queQuestion = config.upload_folder + config.upload_entities.post_image_folder + allQuestion[i].queQuestion;
+
+      allQuestion[i].queTotalLikeCount = await QuestionLikeModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
+      });
+
+      allQuestion[i].queTotalDislikeCount = await QuestionUnlikeModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
+      });
+
+      allQuestion[i].queTotalBookmarkCount = await QuestionsBookmarkModel.count(
+        {
+          where: { queID: allQuestion[i].queID },
+          raw: true,
         }
+      );
 
-        allQuestion[i].queTotalAnswerCount = await QuestionsAnswerModel.count({
-          where: {queID : allQuestion[i].queID},
-          raw: true
-        })
-
-        allQuestion[i].queTotalLikeCount = await QuestionLikeModel.count({
-          where: {queID : allQuestion[i].queID},
-          raw: true
-        })
-
-        allQuestion[i].queTotalDislikeCount = await QuestionUnlikeModel.count({
-          where: {queID : allQuestion[i].queID},
-          raw: true
-        })
-
-        allQuestion[i].queTotalBookmarkCount = await QuestionsBookmarkModel.count({
-          where: {queID : allQuestion[i].queID},
-          raw: true
-        })
-
-        allQuestion[i].queTotalCommentCount = await QuestionsCommentModel.count({
-          where: {queID : allQuestion[i].queID},
-          raw: true
-        })
-
+      allQuestion[i].queTotalCommentCount = await QuestionsCommentModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
+      });
+    }
+    let allQuestionCount = await QuestionModel.count({
+      where: findData,
+      order: [["queID", "DESC"]],
+      raw: true,
+    });
+    let _result = { total_count: 0 };
+    _result.slides = allQuestion;
+    _result.total_count = allQuestionCount;
+    return _result;
+  } else {
+    let allQuestion = await QuestionModel.findAll({
+      where: findData,
+      order: [["queID", "DESC"]],
+      raw: true,
+    });
+    for (let i = 0; i < allQuestion.length; i++) {
+      if (allQuestion[i].queType == "Post") {
+        allQuestion[i].queQuestion =
+          config.upload_folder +
+          config.upload_entities.post_image_folder +
+          allQuestion[i].queQuestion;
       }
-      let allQuestionCount = await QuestionModel.count({   
-          where: findData,     
-          order: [['queID', 'DESC']],
-          raw: true
+
+      allQuestion[i].queTotalAnswerCount = await QuestionsAnswerModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
       });
-      let _result = { total_count: 0 };
-      _result.slides = allQuestion;
-      _result.total_count = allQuestionCount;
-      return _result;
-  }   else {
-      let allQuestion = await QuestionModel.findAll({
-          where: findData,
-          order: [['queID', 'DESC']],
-          raw: true
+
+      allQuestion[i].queTotalLikeCount = await QuestionLikeModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
       });
-      for(let i=0 ; i<allQuestion.length; i++) {
-        if(allQuestion[i].queType == 'Post') {
-          allQuestion[i].queQuestion = config.upload_folder + config.upload_entities.post_image_folder + allQuestion[i].queQuestion;
+
+      allQuestion[i].queTotalDislikeCount = await QuestionUnlikeModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
+      });
+
+      allQuestion[i].queTotalBookmarkCount = await QuestionsBookmarkModel.count(
+        {
+          where: { queID: allQuestion[i].queID },
+          raw: true,
         }
-        
-        allQuestion[i].queTotalAnswerCount = await QuestionsAnswerModel.count({
-          where: {queID : allQuestion[i].queID},
-          raw: true
-        })
+      );
 
-        allQuestion[i].queTotalLikeCount = await QuestionLikeModel.count({
-          where: {queID : allQuestion[i].queID},
-          raw: true
-        })
-
-        allQuestion[i].queTotalDislikeCount = await QuestionUnlikeModel.count({
-          where: {queID : allQuestion[i].queID},
-          raw: true
-        })
-
-        allQuestion[i].queTotalBookmarkCount = await QuestionsBookmarkModel.count({
-          where: {queID : allQuestion[i].queID},
-          raw: true
-        })
-
-        allQuestion[i].queTotalCommentCount = await QuestionsCommentModel.count({
-          where: {queID : allQuestion[i].queID},
-          raw: true
-        })
-
-      }
-      let allQuestionCount = await QuestionModel.count({        
-          order: [['queID', 'DESC']],
-          raw: true
+      allQuestion[i].queTotalCommentCount = await QuestionsCommentModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
       });
-      let _result = { total_count: 0 };
-      _result.slides = allQuestion;
-      _result.total_count = allQuestionCount;
-      return _result;
-  } 
-  
-}
+    }
+    let allQuestionCount = await QuestionModel.count({
+      order: [["queID", "DESC"]],
+      raw: true,
+    });
+    let _result = { total_count: 0 };
+    _result.slides = allQuestion;
+    _result.total_count = allQuestionCount;
+    return _result;
+  }
+};
 
 let QuestionsComment = async (req) => {
   let body = req.body.body ? JSON.parse(req.body.body) : req.body;
   if (helper.undefinedOrNull(body)) {
-      throw new BadRequestError("Request body comes empty");
+    throw new BadRequestError("Request body comes empty");
   }
-  ['queID','userID','queComment'].forEach(x => {
-      if (!body[x]) {
-          throw new BadRequestError(x + " is required");
-      }
+  ["queID", "userID", "queComment"].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
   });
 
   // let questionLike = await QuestionLikeModel
   //     .findOne({ where: {queID : body.queID , userID: body.userID}, raw: true });
-  
+
   // if(questionLike) {
   //   await QuestionLikeModel
   //   .destroy({ where: {queID : body.queID , userID: body.userID}, raw: true });
@@ -430,88 +476,101 @@ let QuestionsComment = async (req) => {
   let questionsCommentData = {
     queID: body.queID,
     userID: body.userID,
-    queComment: body.queComment
-  }
-  
+    queComment: body.queComment,
+  };
+
   let commentData = await QuestionsCommentModel.create(questionsCommentData);
 
-  return {slides : commentData}; 
-  
-}
+  return { slides: commentData };
+};
 
 let QuestionsBookmark = async (req) => {
   let body = req.body.body ? JSON.parse(req.body.body) : req.body;
   if (helper.undefinedOrNull(body)) {
-      throw new BadRequestError("Request body comes empty");
+    throw new BadRequestError("Request body comes empty");
   }
-  ['queID','userID'].forEach(x => {
-      if (!body[x]) {
-          throw new BadRequestError(x + " is required");
-      }
+  ["queID", "userID"].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
   });
 
-  let question = await QuestionModel
-      .findOne({ where: {queID : body.queID , userID: body.userID}, raw: true });
+  let question = await QuestionModel.findOne({
+    where: { queID: body.queID, userID: body.userID },
+    raw: true,
+  });
 
-  let questionBookmark = await QuestionsBookmarkModel
-      .findOne({ where: {queID : body.queID , userID: body.userID}, raw: true });
-  
-  if(questionBookmark) {
-    await QuestionsBookmarkModel
-    .destroy({ where: {queID : body.queID , userID: body.userID}, raw: true });
+  let questionBookmark = await QuestionsBookmarkModel.findOne({
+    where: { queID: body.queID, userID: body.userID },
+    raw: true,
+  });
+
+  if (questionBookmark) {
+    await QuestionsBookmarkModel.destroy({
+      where: { queID: body.queID, userID: body.userID },
+      raw: true,
+    });
   }
 
   let questionbookmarkData = {
     queID: body.queID,
-    userID: body.userID
-  }
-  
-  await QuestionsBookmarkModel.create(questionbookmarkData);
-  await QuestionModel.update({queBookmarkCount : Number(question?.queBookmarkCount) + 1}, {where: { queID: body.queID, userID : body.userID }});
+    userID: body.userID,
+  };
 
-  return {bookmarked : true}; 
-  
-}
+  await QuestionsBookmarkModel.create(questionbookmarkData);
+  await QuestionModel.update(
+    { queBookmarkCount: Number(question?.queBookmarkCount) + 1 },
+    { where: { queID: body.queID, userID: body.userID } }
+  );
+
+  return { bookmarked: true };
+};
 
 let QuestionsUnBookmark = async (req) => {
   let body = req.body.body ? JSON.parse(req.body.body) : req.body;
   if (helper.undefinedOrNull(body)) {
-      throw new BadRequestError("Request body comes empty");
+    throw new BadRequestError("Request body comes empty");
   }
-  ['queID','userID'].forEach(x => {
-      if (!body[x]) {
-          throw new BadRequestError(x + " is required");
-      }
+  ["queID", "userID"].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
   });
 
-  let questionBookmark = await QuestionsBookmarkModel
-      .findOne({ where: {queID : body.queID , userID: body.userID}, raw: true });
-  
-  if(questionBookmark) {
-    await QuestionsBookmarkModel
-    .destroy({ where: {queID : body.queID , userID: body.userID}, raw: true });
+  let questionBookmark = await QuestionsBookmarkModel.findOne({
+    where: { queID: body.queID, userID: body.userID },
+    raw: true,
+  });
 
-    await QuestionModel.update({queBookmarkCount : Number(question?.queBookmarkCount) - 1}, {where: { queID: body.queID, userID : body.userID }});
+  if (questionBookmark) {
+    await QuestionsBookmarkModel.destroy({
+      where: { queID: body.queID, userID: body.userID },
+      raw: true,
+    });
+
+    await QuestionModel.update(
+      { queBookmarkCount: Number(question?.queBookmarkCount) - 1 },
+      { where: { queID: body.queID, userID: body.userID } }
+    );
   }
 
-  return {unbookmarked : true}; 
-  
-}
+  return { unbookmarked: true };
+};
 
 let QuestionsAnswersReply = async (req) => {
   let body = req.body.body ? JSON.parse(req.body.body) : req.body;
   if (helper.undefinedOrNull(body)) {
-      throw new BadRequestError("Request body comes empty");
+    throw new BadRequestError("Request body comes empty");
   }
-  ['queID','userID','answerID','replyAnswer'].forEach(x => {
-      if (!body[x]) {
-          throw new BadRequestError(x + " is required");
-      }
+  ["queID", "userID", "answerID", "replyAnswer"].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
   });
 
   // let questionLike = await QuestionLikeModel
   //     .findOne({ where: {queID : body.queID , userID: body.userID}, raw: true });
-  
+
   // if(questionLike) {
   //   await QuestionLikeModel
   //   .destroy({ where: {queID : body.queID , userID: body.userID}, raw: true });
@@ -521,85 +580,93 @@ let QuestionsAnswersReply = async (req) => {
     queID: body.queID,
     userID: body.userID,
     answerID: body.answerID,
-    replyAnswer: body.replyAnswer
-  }
-  
-  let ansReplyData = await QuestionsAnswersReplyModel.create(questionsAnswerReplyData);
+    replyAnswer: body.replyAnswer,
+  };
 
-  return {slides : ansReplyData}; 
-  
-}
+  let ansReplyData = await QuestionsAnswersReplyModel.create(
+    questionsAnswerReplyData
+  );
+
+  return { slides: ansReplyData };
+};
 
 let QuestionsAnswerLike = async (req) => {
   let body = req.body.body ? JSON.parse(req.body.body) : req.body;
   if (helper.undefinedOrNull(body)) {
-      throw new BadRequestError("Request body comes empty");
+    throw new BadRequestError("Request body comes empty");
   }
-  ['answerID','userID'].forEach(x => {
-      if (!body[x]) {
-          throw new BadRequestError(x + " is required");
-      }
+  ["answerID", "userID"].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
   });
 
-  let questionAnswerUnlike = await QuestionsAnswerUnlikeModel
-      .findAll({ where: {answerID : body.answerID , userID: body.userID}, raw: true });
-  
-  if(questionAnswerUnlike) {
-    await QuestionsAnswerUnlikeModel
-    .destroy({ where: {answerID : body.answerID , userID: body.userID}, raw: true });
+  let questionAnswerUnlike = await QuestionsAnswerUnlikeModel.findAll({
+    where: { answerID: body.answerID, userID: body.userID },
+    raw: true,
+  });
+
+  if (questionAnswerUnlike) {
+    await QuestionsAnswerUnlikeModel.destroy({
+      where: { answerID: body.answerID, userID: body.userID },
+      raw: true,
+    });
   }
 
   let questionAnswerLikeData = {
     answerID: body.answerID,
-    userID: body.userID
-  }
-  
+    userID: body.userID,
+  };
+
   await QuestionsAnswerLikeModel.create(questionAnswerLikeData);
 
-  return {answerliked : true}; 
-  
-}
+  return { answerliked: true };
+};
 
 let QuestionsAnswerUnlike = async (req) => {
   let body = req.body.body ? JSON.parse(req.body.body) : req.body;
   if (helper.undefinedOrNull(body)) {
-      throw new BadRequestError("Request body comes empty");
+    throw new BadRequestError("Request body comes empty");
   }
-  ['answerID','userID'].forEach(x => {
-      if (!body[x]) {
-          throw new BadRequestError(x + " is required");
-      }
+  ["answerID", "userID"].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
   });
 
-  let questionAnswerLike = await QuestionsAnswerLikeModel
-      .findOne({ where: {answerID : body.answerID , userID: body.userID}, raw: true });
-  
-  if(questionAnswerLike) {
-    await QuestionsAnswerLikeModel
-    .destroy({ where: {answerID : body.answerID , userID: body.userID}, raw: true });
+  let questionAnswerLike = await QuestionsAnswerLikeModel.findOne({
+    where: { answerID: body.answerID, userID: body.userID },
+    raw: true,
+  });
+
+  if (questionAnswerLike) {
+    await QuestionsAnswerLikeModel.destroy({
+      where: { answerID: body.answerID, userID: body.userID },
+      raw: true,
+    });
   }
 
   let questionAnswerUnlikeData = {
     answerID: body.answerID,
-    userID: body.userID
-  }
-  
+    userID: body.userID,
+  };
+
   await QuestionsAnswerUnlikeModel.create(questionAnswerUnlikeData);
 
-  return {unliked : true}; 
-}
+  return { unliked: true };
+};
 
 module.exports = {
-  CreateQuestion:CreateQuestion,
-  QuestionList:QuestionList,
-  QuestionLike:QuestionLike,
-  QuestionUnlike:QuestionUnlike,
+  CreateQuestion: CreateQuestion,
+  QuestionList: QuestionList,
+  QuestionLike: QuestionLike,
+  QuestionUnlike: QuestionUnlike,
   QuestionsAnswer: QuestionsAnswer,
-  MyQuestionList:MyQuestionList,
-  QuestionsComment:QuestionsComment,
-  QuestionsBookmark:QuestionsBookmark,
-  QuestionsUnBookmark:QuestionsUnBookmark,
-  QuestionsAnswersReply:QuestionsAnswersReply,
-  QuestionsAnswerLike:QuestionsAnswerLike,
-  QuestionsAnswerUnlike:QuestionsAnswerUnlike
+  MyQuestionList: MyQuestionList,
+  QuestionsComment: QuestionsComment,
+  QuestionsBookmark: QuestionsBookmark,
+  QuestionsUnBookmark: QuestionsUnBookmark,
+  QuestionsAnswersReply: QuestionsAnswersReply,
+  QuestionsAnswerLike: QuestionsAnswerLike,
+  QuestionsAnswerUnlike: QuestionsAnswerUnlike,
 };
