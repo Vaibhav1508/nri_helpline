@@ -458,10 +458,6 @@ let CompanyDetails = async (req) => {
     raw: true,
   });
 
-  let industry = await IndustryModel.findOne({
-    where: { industryID: CompanyDetails.companyIndustries },
-  });
-
   if (!CompanyDetails) {
     throw new BadRequestError("Company does not exist");
   }
@@ -471,7 +467,7 @@ let CompanyDetails = async (req) => {
 
   return {
     ...CompanyDetails,
-    companyIndustries: industry?.industryName,
+    companyIndustries: +CompanyDetails?.companyIndustries,
   };
 };
 
