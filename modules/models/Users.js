@@ -62,6 +62,7 @@ const UsersModal = sequelize_mysql.define(
     },
     userOTP: {
       type: Sequelize.STRING,
+      defaultValue: null,
     },
     userSignupOTPVerified: {
       type: Sequelize.ENUM,
@@ -140,7 +141,6 @@ const UsersModal = sequelize_mysql.define(
     },
     userCompanyId: {
       type: Sequelize.INTEGER,
-      defaultValue: null,
     },
     userDocumentVerified: {
       type: Sequelize.ENUM,

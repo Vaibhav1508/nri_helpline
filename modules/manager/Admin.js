@@ -227,64 +227,70 @@ let ChangeUserStatus = async (body) => {
 };
 
 let craeateBusinessAssociate = async (req) => {
-  let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+  try {
+    let body = req.body.body ? JSON.parse(req.body.body) : req.body;
 
-  [
-    "companyName",
-    "userFirstName",
-    "userEmail",
-    "userMobile",
-    "languageID",
-    "streetAddress",
-    "companyPincode",
-    "userCountryCode",
-    "userStateCode",
-    "userCityCode",
-  ].forEach((x) => {
-    if (!body[x]) {
-      throw new BadRequestError(x + " is required");
-    }
-  });
+    [
+      "companyName",
+      "userFirstName",
+      "userEmail",
+      "userMobile",
+      "languageID",
+      "streetAddress",
+      "companyPincode",
+      "userCountryCode",
+      "userStateCode",
+      "userCityCode",
+    ].forEach((x) => {
+      if (!body[x]) {
+        throw new BadRequestError(x + " is required");
+      }
+    });
 
-  // create company
-  let company = await CompanyModel.create({
-    companyName: body.companyName,
-    companyEmail: body.userEmail,
-    companyLocations: body.streetAddress,
-    companyStreet2: body.streetAddress2 ? body.streetAddress2 : "",
-    companyPincode: body.companyPincode ? body.companyPincode : "",
-    companyPhoneNumber: body.companyPhoneNumber ? body.companyPhoneNumber : "",
-  });
+    // create company
+    let company = await CompanyModel.create({
+      companyName: body.companyName,
+      companyEmail: body.userEmail,
+      companyLocations: body.streetAddress,
+      companyStreet2: body.streetAddress2 ? body.streetAddress2 : "",
+      companyPincode: body.companyPincode ? body.companyPincode : "",
+      companyPhoneNumber: body.companyPhoneNumber
+        ? body.companyPhoneNumber
+        : "",
+    });
 
-  // create hr
-  let hr = await UsersModel.create({
-    ...body,
-    userLastName: "",
-    userPassword: md5("123456"),
-    userType: "HR",
-    userStatus: "Active",
-    userCompanyId: company.companyID,
-  });
+    // create hr
+    let hr = await UsersModel.create({
+      ...body,
+      userLastName: "",
+      userPassword: md5("123456"),
+      userType: "HR",
+      userStatus: "Active",
+      userCompanyId: company.companyID,
+    });
 
-  // send mail
-  let mailData = {
-    to: body.userEmail,
-    subject: "Welcome to Vocation",
-    html: `<div>
-    <h1>Welcome to Vocation</h1>
-    <p>
-      Hi ${body.userFirstName},<br />
-      <br />
-      Welcome to Vocation. You have successfully registered as a Business Associate.
-      
-      <br />
-      Your Password to login into app is 123456.
-      `,
-  };
+    // send mail
+    let mailData = {
+      to: body.userEmail,
+      subject: "Welcome to Vocation",
+      html: `<div>
+      <h1>Welcome to Vocation</h1>
+      <p>
+        Hi ${body.userFirstName},<br />
+        <br />
+        Welcome to Vocation. You have successfully registered as a Business Associate.
+        
+        <br />
+        Your Password to login into app is 123456.
+        `,
+    };
 
-  await mailer.sendMail(mailData);
+    await mailer.sendMail(mailData);
 
-  return { status: true };
+    return { status: true };
+  } catch (err) {
+    console.log(err);
+  }
 };
 
 let AssociateUpdate = async (req) => {
@@ -338,32 +344,37 @@ let AssociateUpdate = async (req) => {
 
 // get associate list
 let getAssociateList = async () => {
-  let associates = await UsersModel.findAll({
-    where: { userCompanyId: { $ne: null | 0 } },
-    raw: true,
-  });
+  try {
+    let associates = await UsersModel.findAll({
+      where: { userType: "HR" },
+      raw: true,
+    });
 
-  // company list
-  let companyList = await CompanyModel.findAll({
-    raw: true,
-  });
+    // company list
+    let companyList = await CompanyModel.findAll({
+      raw: true,
+    });
 
-  const associateList = associates.map((x) => {
-    let company = companyList.find((y) => y.companyID == x.userCompanyId);
-    return {
-      userID: x.userID,
-      userFirstName: x.userFirstName,
-      userLastName: x.userLastName,
-      userEmail: x.userEmail,
-      userMobile: x.userMobile,
-      userCompanyId: x.userCompanyId,
-      companyName: company?.companyName,
-      companyStatus: company?.companyOperatingStatus,
-      userStatus: x.userStatus,
-    };
-  });
+    const associateList = associates.map((x) => {
+      let company = companyList.find((y) => y.companyID == x.userCompanyId);
+      return {
+        userID: x.userID,
+        userFirstName: x.userFirstName,
+        userLastName: x.userLastName,
+        userEmail: x.userEmail,
+        userMobile: x.userMobile,
+        userCompanyId: x.userCompanyId,
+        companyName: company?.companyName,
+        companyStatus: company?.companyOperatingStatus,
+        userStatus: x.userStatus,
+        userVerified: x.userDocumentVerified,
+      };
+    });
 
-  return { data: associateList };
+    return { data: associateList };
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 // get associate details

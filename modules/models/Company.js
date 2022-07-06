@@ -14,18 +14,23 @@ const CompanyModal = sequelize_mysql.define(
     },
     companyLogo: {
       type: Sequelize.STRING,
+      defaultValue: null,
     },
     companyCoverPhoto: {
       type: Sequelize.STRING,
+      default: null,
     },
     companyTagline: {
       type: Sequelize.STRING,
+      default: null,
     },
     companyWebsite: {
       type: Sequelize.STRING,
+      default: null,
     },
     companyAbout: {
       type: Sequelize.STRING,
+      default: null,
     },
     companyOperatingStatus: {
       type: Sequelize.ENUM,
@@ -40,9 +45,11 @@ const CompanyModal = sequelize_mysql.define(
     },
     companyFBUrl: {
       type: Sequelize.STRING,
+      defaultValue: null,
     },
     companyTwiterUrl: {
       type: Sequelize.STRING,
+      defaultValue: null,
     },
     companyStatus: {
       type: Sequelize.ENUM,
@@ -51,12 +58,15 @@ const CompanyModal = sequelize_mysql.define(
     },
     companyLocations: {
       type: Sequelize.STRING,
+      defaultValue: null,
     },
     companyFounders: {
       type: Sequelize.STRING,
+      dafaultValue: null,
     },
     companyIndustries: {
       type: Sequelize.STRING,
+      defaultValue: null,
     },
     companyCreatedDate: {
       type: Sequelize.DATE,
@@ -64,11 +74,11 @@ const CompanyModal = sequelize_mysql.define(
     },
     companyStreet2: {
       type: Sequelize.STRING,
-      defaultValue: "",
+      defaultValue: null,
     },
     companyPincode: {
       type: Sequelize.STRING,
-      defaultValue: "",
+      defaultValue: null,
     },
     companyPhoneNumber: {
       type: Sequelize.STRING,
@@ -76,7 +86,7 @@ const CompanyModal = sequelize_mysql.define(
     },
     companyOperatingHours: {
       type: Sequelize.INTEGER,
-      defaultValue: 0,
+      defaultValue: null,
     },
   },
   {
