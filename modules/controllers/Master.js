@@ -1,5 +1,7 @@
 let masterManager = require("../manager/Master");
 
+//#region Country
+
 /**
  * @swagger
  * /api/v1/User/user-update/:userID:
@@ -189,9 +191,28 @@ let countryDetail = (req, res, next) => {
     .catch(next);
 };
 
+const changeCountryStatus = (req, res, next) => {
+  return masterManager
+    .changeCountryStatus(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+//#endregion
+
+//#region State
+//#endregion
+
 module.exports = {
   createCountry: createCountry,
   CountryUpdate: CountryUpdate,
   CountryList,
   countryDetail,
+  changeCountryStatus,
 };

@@ -16,6 +16,7 @@ const { use } = require("../routes/Users");
 const VocationModal = require("../models/Vocation");
 const CompanyModal = require("../models/Company");
 const userFollowModal = require("../models/UserFollowID");
+const { Op } = require("sequelize");
 
 let generateAuthToken = async (phone) => {
   return uuidv4();
@@ -559,11 +560,33 @@ const unfollowUser = async (req) => {
   });
 
   await userFollowModal.destroy({
-    where: { userID, userfollowUserID },
+    where: {
+      [Op.and]: [
+        { userID: body.userID },
+        { userfollowUserID: body.userfollowUserID },
+      ],
+    },
     raw: true,
   });
   return {
     message: "unfollowed",
+  };
+};
+
+const followUser = async (req) => {
+  const body = req.body.body ? JSON.parse(req.body.body) : req.body;
+  ["userID", "userfollowUserID"].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
+  });
+
+  await userFollowModal.create({
+    userID: body.userID,
+    userfollowUserID: body.userfollowUserID,
+  });
+  return {
+    message: "followed",
   };
 };
 
@@ -582,4 +605,5 @@ module.exports = {
   updateCompanyDetails,
   getUserFollowers,
   unfollowUser,
+  followUser,
 };

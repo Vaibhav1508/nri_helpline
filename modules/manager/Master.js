@@ -7,6 +7,8 @@ let helper = require("../helpers/helpers"),
   CountryModel = require("../models/Country"),
   BadRequestError = require("../errors/badRequestError");
 
+//#region Country
+
 let createCountry = async (req) => {
   let body = req.body.body ? JSON.parse(req.body.body) : req.body;
   if (helper.undefinedOrNull(body)) {
@@ -42,13 +44,13 @@ let createCountry = async (req) => {
   // if(user.vocationStatus == 'Inactive' && body.status != 1) {
   //     throw new BadRequestError("Already inactivated");
   // }
-  let countryStatus = body.countryStatus == 1 ? "Active" : "Inactive";
+  // let countryStatus = body.countryStatus == 1 ? "Active" : "Inactive";
   let countryData = {
     countryFlagImage: filename,
     countryName: body.countryName,
     countryCode: body.countryCode,
     countryRemarks: body.countryRemarks ? body.countryRemarks : "",
-    countryStatus: countryStatus,
+    countryStatus: body.countryStatus,
     countryShortName: body.countryShortName ? body.countryShortName : "",
     countryCurrency: body.countryCurrency,
   };
@@ -98,9 +100,9 @@ let CountryUpdate = async (req) => {
     updateData["countryFlagImage"] = req.file.filename;
   }
 
-  if (body.countryStatus === 0 || body.countryStatus === "0") {
-    updateData["countryStatus"] = "Inactive";
-  }
+  // if (body.countryStatus === 0 || body.countryStatus === "0") {
+  //   updateData["countryStatus"] = "Inactive";
+  // }
   await CountryModel.update(updateData, {
     where: { countryID: req.params.countryID },
     raw: true,
@@ -117,20 +119,21 @@ let CountryUpdate = async (req) => {
   return { slides: countryData };
 };
 
-let CountryList = async (body) => {
-  let limit = body.limit ? parseInt(body.limit) : 10;
-  let page = body.page || 1;
+let CountryList = async (req) => {
+  let limit = req.body.limit ? parseInt(req.body.limit) : 10;
+  let page = req.body.page || 1;
   let offset = (page - 1) * limit;
-  let findData = { countryStatus: "Active" };
-  if (body.filters) {
-    if (body.filters.searchtext) {
+  // let findData = { countryStatus: "Active" };
+  let findData = {};
+  if (req.body.filters) {
+    if (req.body.filters.searchtext) {
       findData["$and"] = [
-        { countryName: { $like: "%" + body.filters.searchtext + "%" } },
+        { countryName: { $like: "%" + req.body.filters.searchtext + "%" } },
       ];
     }
   }
-  if (body.page || body.limit) {
-    let allCountry = await countryModel.findAll({
+  if (req.body.page || req.body.limit) {
+    let allCountry = await CountryModel.findAll({
       where: findData,
       limit,
       offset,
@@ -193,9 +196,34 @@ let countryDetail = async (req) => {
   return { slides: country };
 };
 
+let changeCountryStatus = async (req) => {
+  let country = await CountryModel.findOne({
+    where: { countryID: req.body.countryID },
+    raw: true,
+  });
+
+  if (!country) {
+    throw new BadRequestError("Country doesn't exists");
+  }
+
+  await CountryModel.update(
+    { countryStatus: req.body.countryStatus },
+    { where: { countryID: req.body.countryID } }
+  );
+  return {
+    status: req.body.countryStatus,
+  };
+};
+
+//#endregion
+
+//#region State
+//#endregion
+
 module.exports = {
   createCountry: createCountry,
   CountryUpdate: CountryUpdate,
   CountryList: CountryList,
   countryDetail,
+  changeCountryStatus,
 };

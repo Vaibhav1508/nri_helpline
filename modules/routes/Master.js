@@ -18,5 +18,6 @@ router.put(
 );
 router.post("/country-list", controller.CountryList);
 router.get("/country-detail/:countryID", controller.countryDetail);
+router.post("/change-country-status", controller.changeCountryStatus);
 
 module.exports = router;

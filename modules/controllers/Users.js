@@ -672,6 +672,19 @@ const unfollowUser = (req, res, next) => {
     .catch(next);
 };
 
+const followUser = (req, res, next) => {
+  return userManager
+    .followUser(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
 module.exports = {
   Login: Login,
   changePassword: changePassword,
@@ -687,4 +700,5 @@ module.exports = {
   UpdateCompanyDetails,
   getUserFollowers,
   unfollowUser,
+  followUser,
 };

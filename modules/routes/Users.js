@@ -32,5 +32,6 @@ router.put(
 router.post("/company-details", controller.CompanyDetails);
 router.get("/user-followers/:userID", controller.getUserFollowers);
 router.post("/unfollow-user", controller.unfollowUser);
+router.post("/follow-user", controller.followUser);
 
 module.exports = router;
