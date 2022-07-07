@@ -13,7 +13,7 @@ const QuestionModal = sequelize_mysql.define("questions",
         queQuestion:{
             type: Sequelize.STRING
         },
-        queDiscription: {
+        queDescription: {
             type: Sequelize.STRING
         },
         queMode: {

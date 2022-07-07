@@ -835,6 +835,366 @@ let QuestionsAnswerUnlike = (req, res, next) => {
         .catch(next);
 }
 
+/**
+ * @swagger
+ * /api/v1/vocation/QuestionList:
+ *   post:
+ *     summary: vocations List.
+ *     tags:
+ *      - Vocation
+ *     parameters :
+ *     - name: x-auth-api-key
+ *       in: header   
+ *       description: an authorization header
+ *       required: true
+ *       type: string 
+ *     - name: Accept-Language
+ *       in: header   
+ *       description: Language
+ *       required: false
+ *       type: string 
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               page:
+ *                 type: string
+ *                 example: 1
+ *                 paramType: body
+ *               limit:
+ *                 type: string
+ *                 example: 2
+ *                 paramType: body
+ *     responses:
+ *       200:
+ *         description: user object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: error in request processing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *                   example: 400
+*/
+let QuestionsCommentLike = (req, res, next) => {
+    return questionManager
+        .QuestionsCommentLike(req)
+        .then(data => {
+            let result = {
+                status:200,
+                data: data
+            }
+            return res.json(result);
+        })
+        .catch(next);
+}
+
+/**
+ * @swagger
+ * /api/v1/vocation/QuestionList:
+ *   post:
+ *     summary: vocations List.
+ *     tags:
+ *      - Vocation
+ *     parameters :
+ *     - name: x-auth-api-key
+ *       in: header   
+ *       description: an authorization header
+ *       required: true
+ *       type: string 
+ *     - name: Accept-Language
+ *       in: header   
+ *       description: Language
+ *       required: false
+ *       type: string 
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               page:
+ *                 type: string
+ *                 example: 1
+ *                 paramType: body
+ *               limit:
+ *                 type: string
+ *                 example: 2
+ *                 paramType: body
+ *     responses:
+ *       200:
+ *         description: user object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: error in request processing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *                   example: 400
+*/
+let QuestionsCommentUnLike = (req, res, next) => {
+    return questionManager
+        .QuestionsCommentUnLike(req)
+        .then(data => {
+            let result = {
+                status:200,
+                data: data
+            }
+            return res.json(result);
+        })
+        .catch(next);
+}
+
+/**
+ * @swagger
+ * /api/v1/vocation/QuestionList:
+ *   post:
+ *     summary: vocations List.
+ *     tags:
+ *      - Vocation
+ *     parameters :
+ *     - name: x-auth-api-key
+ *       in: header   
+ *       description: an authorization header
+ *       required: true
+ *       type: string 
+ *     - name: Accept-Language
+ *       in: header   
+ *       description: Language
+ *       required: false
+ *       type: string 
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               page:
+ *                 type: string
+ *                 example: 1
+ *                 paramType: body
+ *               limit:
+ *                 type: string
+ *                 example: 2
+ *                 paramType: body
+ *     responses:
+ *       200:
+ *         description: user object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: error in request processing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *                   example: 400
+*/
+let QuestionArchive = (req, res, next) => {
+    return questionManager
+        .QuestionArchive(req)
+        .then(data => {
+            let result = {
+                status:200,
+                data: data
+            }
+            return res.json(result);
+        })
+        .catch(next);
+}
+
+/**
+ * @swagger
+ * /api/v1/vocation/QuestionList:
+ *   post:
+ *     summary: vocations List.
+ *     tags:
+ *      - Vocation
+ *     parameters :
+ *     - name: x-auth-api-key
+ *       in: header   
+ *       description: an authorization header
+ *       required: true
+ *       type: string 
+ *     - name: Accept-Language
+ *       in: header   
+ *       description: Language
+ *       required: false
+ *       type: string 
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               page:
+ *                 type: string
+ *                 example: 1
+ *                 paramType: body
+ *               limit:
+ *                 type: string
+ *                 example: 2
+ *                 paramType: body
+ *     responses:
+ *       200:
+ *         description: user object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: error in request processing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *                   example: 400
+*/
+let MyArchivedQuestionsList = (req, res, next) => {
+    return questionManager
+        .MyArchivedQuestionsList(req)
+        .then(data => {
+            let result = {
+                status:200,
+                data: data
+            }
+            return res.json(result);
+        })
+        .catch(next);
+}
+
+/**
+ * @swagger
+ * /api/v1/vocation/QuestionList:
+ *   post:
+ *     summary: vocations List.
+ *     tags:
+ *      - Vocation
+ *     parameters :
+ *     - name: x-auth-api-key
+ *       in: header   
+ *       description: an authorization header
+ *       required: true
+ *       type: string 
+ *     - name: Accept-Language
+ *       in: header   
+ *       description: Language
+ *       required: false
+ *       type: string 
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               page:
+ *                 type: string
+ *                 example: 1
+ *                 paramType: body
+ *               limit:
+ *                 type: string
+ *                 example: 2
+ *                 paramType: body
+ *     responses:
+ *       200:
+ *         description: user object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: error in request processing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *                   example: 400
+*/
+let QuestionActivate = (req, res, next) => {
+    return questionManager
+        .QuestionActivate(req)
+        .then(data => {
+            let result = {
+                status:200,
+                data: data
+            }
+            return res.json(result);
+        })
+        .catch(next);
+}
+
+
+let updateQuestion = (req, res, next) => {
+    return questionManager
+        .updateQuestion(req)
+        .then(data => {
+            let result = {
+                status:200,
+                data: data
+            }
+            return res.json(result);
+        })
+        .catch(next);
+ } 
+
+
 module.exports = {
     CreateQuestion: CreateQuestion,
     QuestionList:QuestionList,
@@ -847,5 +1207,11 @@ module.exports = {
     QuestionsUnBookmark:QuestionsUnBookmark,
     QuestionsAnswersReply:QuestionsAnswersReply,
     QuestionsAnswerLike:QuestionsAnswerLike,
-    QuestionsAnswerUnlike:QuestionsAnswerUnlike
+    QuestionsAnswerUnlike:QuestionsAnswerUnlike,
+    QuestionsCommentLike:QuestionsCommentLike,
+    QuestionsCommentUnLike:QuestionsCommentUnLike,
+    QuestionArchive:QuestionArchive,
+    MyArchivedQuestionsList: MyArchivedQuestionsList,
+    QuestionActivate:QuestionActivate,
+    updateQuestion:updateQuestion
  };

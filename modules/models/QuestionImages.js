@@ -3,9 +3,9 @@ let sequelize_mysql = require("../helpers/sequelize-mysql");
 let Sequelize = require("sequelize");
 const { NONE } = require("sequelize");
 
-const QuestionsAnswersReplyModal = sequelize_mysql.define("answerreply",
+const QuestionImagesModel = sequelize_mysql.define("queimages",
     {
-        replyID :{
+        queImageID   :{
             type: Sequelize.INTEGER,
             autoIncrement: true,
             primaryKey: true
@@ -16,22 +16,15 @@ const QuestionsAnswersReplyModal = sequelize_mysql.define("answerreply",
         userID: {
             type: Sequelize.NUMBER
         },
-        answerID: {
-            type: Sequelize.NUMBER
-        },
-        replyAnswer: {
+        image: {
             type: Sequelize.STRING
-        },
-        replyCreatedDate: {
-            type: Sequelize.DATE,
-            defaultValue: () => new Date(),
         }
     },
     {
         freezeTableName: true,
-        tableName: 'answerreply'
+        tableName: 'queimages'
     }
 );
 
-module.exports = QuestionsAnswersReplyModal;
+module.exports = QuestionImagesModel;
 
