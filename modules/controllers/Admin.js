@@ -411,7 +411,7 @@ let createBussinessAssociate = (req, res, next) => {
 
 let getAssociateList = (req, res, next) => {
   return adminManager
-    .getAssociateList()
+    .getAssociateList(req.body)
     .then((data) => {
       let result = {
         status: 200,

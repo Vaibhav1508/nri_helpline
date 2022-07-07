@@ -1,8 +1,6 @@
+let masterManager = require("../manager/Master");
 
-
- let masterManager = require('../manager/Master');
-
- /**
+/**
  * @swagger
  * /api/v1/User/user-update/:userID:
  *   put:
@@ -11,20 +9,20 @@
  *      - Web User
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: userID
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
  *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -70,20 +68,20 @@
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let createCountry = (req, res, next) => {
-    return masterManager
-        .createCountry(req)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-} 
- 
+  return masterManager
+    .createCountry(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
 /**
  * @swagger
  * /api/v1/Admin/vocation-update/:vocationID:
@@ -93,20 +91,20 @@ let createCountry = (req, res, next) => {
  *      - Vocation
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: userID
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
  *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -151,21 +149,49 @@ let createCountry = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let CountryUpdate = (req, res, next) => {
-    return masterManager
-        .CountryUpdate(req)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-}
- 
- module.exports = {
-    createCountry:createCountry,
-    CountryUpdate:CountryUpdate
- };
+  return masterManager
+    .CountryUpdate(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+let CountryList = (req, res, next) => {
+  return masterManager
+    .CountryList(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+let countryDetail = (req, res, next) => {
+  return masterManager
+    .countryDetail(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+module.exports = {
+  createCountry: createCountry,
+  CountryUpdate: CountryUpdate,
+  CountryList,
+  countryDetail,
+};

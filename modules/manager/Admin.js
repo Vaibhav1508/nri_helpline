@@ -88,7 +88,9 @@ let UsersList = async (body) => {
   let limit = body.limit ? parseInt(body.limit) : 10;
   let page = body.page || 1;
   let offset = (page - 1) * limit;
-  let findData = {};
+  let findData = {
+    userType: "Professional",
+  };
   if (body.filters) {
     if (body.filters.searchtext) {
       findData["$or"] = [
@@ -290,6 +292,7 @@ let craeateBusinessAssociate = async (req) => {
     return { status: true };
   } catch (err) {
     console.log(err);
+    throw new BadRequestError(err.errors);
   }
 };
 
@@ -343,10 +346,27 @@ let AssociateUpdate = async (req) => {
 };
 
 // get associate list
-let getAssociateList = async () => {
+let getAssociateList = async (body) => {
   try {
+    let limit = body.limit ? parseInt(body.limit) : 10;
+    let page = body.page || 1;
+    let offset = (page - 1) * limit;
+    let findData = {};
+    if (body.filters) {
+      if (body.filters.searchtext) {
+        findData["$or"] = [
+          { userFirstName: { $like: "%" + body.filters.searchtext + "%" } },
+        ];
+      }
+    }
     let associates = await UsersModel.findAll({
-      where: { userType: "HR" },
+      where: {
+        ...findData,
+        userType: "HR",
+      },
+      limit,
+      offset,
+      order: [["userID", "DESC"]],
       raw: true,
     });
 
@@ -371,7 +391,12 @@ let getAssociateList = async () => {
       };
     });
 
-    return { data: associateList };
+    let _result = { total_count: 0 };
+    _result.slides = associateList;
+    _result.total_count = associateList.length;
+    return _result;
+
+    // return { data: associateList };
   } catch (error) {
     console.log(error);
   }
