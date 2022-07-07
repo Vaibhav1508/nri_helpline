@@ -207,6 +207,71 @@ const changeCountryStatus = (req, res, next) => {
 //#endregion
 
 //#region State
+const createState = (req, res, next) => {
+  return masterManager
+    .createState(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+const updateState = (req, res, next) => {
+  return masterManager
+    .updateState(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+const stateList = (req, res, next) => {
+  return masterManager
+    .stateList(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+const stateDetail = (req, res, next) => {
+  return masterManager
+    .stateDetail(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+const changeStateStatus = (req, res, next) => {
+  return masterManager
+    .changeStateStatus(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
 //#endregion
 
 module.exports = {
@@ -215,4 +280,9 @@ module.exports = {
   CountryList,
   countryDetail,
   changeCountryStatus,
+  createState,
+  updateState,
+  stateList,
+  stateDetail,
+  changeStateStatus,
 };
