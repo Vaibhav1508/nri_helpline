@@ -461,6 +461,13 @@ let CompanyDetails = async (req) => {
   if (!CompanyDetails) {
     throw new BadRequestError("Company does not exist");
   }
+
+  // get industry name
+  let industry = await IndustryModel.findOne({
+    where: { industryID: CompanyDetails.companyIndustries },
+    raw: true,
+  });
+
   if (CompanyDetails.companyLogo) {
     CompanyDetails.companyLogo = `${process.env.BASE_URL}/${config.upload_folder}/${config.upload_entities.compnay_image_folder}/${CompanyDetails.companyLogo}`;
   }
@@ -468,6 +475,7 @@ let CompanyDetails = async (req) => {
   return {
     ...CompanyDetails,
     companyIndustries: +CompanyDetails?.companyIndustries,
+    industryName: industry?.industryName,
   };
 };
 
@@ -482,7 +490,7 @@ let updateCompanyDetails = async (req) => {
     "companyAbout",
     "companyEmployeesNo",
     "companyFounders",
-    "companyOperatingHours",
+    "companyOperatingStatus",
   ].forEach((x) => {
     if (!body[x]) {
       throw new BadRequestError(x + " is required");
