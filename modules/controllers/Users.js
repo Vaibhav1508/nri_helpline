@@ -646,6 +646,32 @@ let UpdateCompanyDetails = (req, res, next) => {
     .catch(next);
 };
 
+let getUserFollowers = (req, res, next) => {
+  return userManager
+    .getUserFollowers(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+const unfollowUser = (req, res, next) => {
+  return userManager
+    .unfollowUser(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
 module.exports = {
   Login: Login,
   changePassword: changePassword,
@@ -659,4 +685,6 @@ module.exports = {
   UserUpdate: UserUpdate,
   CompanyDetails,
   UpdateCompanyDetails,
+  getUserFollowers,
+  unfollowUser,
 };

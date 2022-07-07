@@ -15,6 +15,7 @@ const { v4: uuidv4 } = require("uuid");
 const { use } = require("../routes/Users");
 const VocationModal = require("../models/Vocation");
 const CompanyModal = require("../models/Company");
+const userFollowModal = require("../models/UserFollowID");
 
 let generateAuthToken = async (phone) => {
   return uuidv4();
@@ -522,6 +523,50 @@ let updateCompanyDetails = async (req) => {
   return { company };
 };
 
+let getUserFollowers = async (req) => {
+  // id from  req params
+  const userID = req.params.userID;
+
+  let userFollowers = await userFollowModal.findAll({
+    where: { userID },
+    raw: true,
+  });
+  let user = await UserModel.findOne({
+    where: { userID },
+    raw: true,
+  });
+  let followers = await UserModel.findAll({
+    where: { userID: userFollowers.map((x) => x.userfollowUserID) },
+    raw: true,
+  });
+  followers.forEach((x) => {
+    x.userProfilePicture =
+      config.upload_folder +
+      config.upload_entities.user_profile_image_folder +
+      x.userProfilePicture;
+
+    x.isFollow = true;
+  });
+  return { followers };
+};
+
+const unfollowUser = async (req) => {
+  const body = req.body.body ? JSON.parse(req.body.body) : req.body;
+  ["userID", "userfollowUserID"].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
+  });
+
+  await userFollowModal.destroy({
+    where: { userID, userfollowUserID },
+    raw: true,
+  });
+  return {
+    message: "unfollowed",
+  };
+};
+
 module.exports = {
   Login: Login,
   signout: signout,
@@ -535,4 +580,6 @@ module.exports = {
   UserUpdate: UserUpdate,
   CompanyDetails,
   updateCompanyDetails,
+  getUserFollowers,
+  unfollowUser,
 };

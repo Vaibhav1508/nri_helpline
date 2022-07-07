@@ -30,5 +30,7 @@ router.put(
   controller.UpdateCompanyDetails
 );
 router.post("/company-details", controller.CompanyDetails);
+router.get("/user-followers/:userID", controller.getUserFollowers);
+router.post("/unfollow-user", controller.unfollowUser);
 
 module.exports = router;
