@@ -216,7 +216,7 @@ let QuestionList = async (body) => {
         raw: true,
       });
 
-      user.userProfilePicture = config.upload_folder + config.upload_entities.post_image_folder + user.userProfilePicture;
+      user.userProfilePicture = config.upload_folder + config.upload_entities.user_profile_image_folder + user.userProfilePicture;
       allQuestion[i].user = user
 
       allQuestion[i].comments = await QuestionsCommentModel.findAll({
@@ -372,7 +372,7 @@ let QuestionList = async (body) => {
         raw: true,
       });
 
-      user.userProfilePicture = config.upload_folder + config.upload_entities.post_image_folder + user.userProfilePicture;
+      user.userProfilePicture = config.upload_folder + config.upload_entities.user_profile_image_folder + user.userProfilePicture;
       allQuestion[i].user = user
 
       allQuestion[i].comments = await QuestionsCommentModel.findAll({
@@ -687,7 +687,7 @@ let MyQuestionList = async (body) => {
         raw: true,
       });
 
-      user.userProfilePicture = config.upload_folder + config.upload_entities.post_image_folder + user.userProfilePicture;
+      user.userProfilePicture = config.upload_folder + config.upload_entities.user_profile_image_folder + user.userProfilePicture;
       allQuestion[i].user = user
 
       allQuestion[i].comments = await QuestionsCommentModel.findAll({
@@ -844,7 +844,7 @@ let MyQuestionList = async (body) => {
         raw: true,
       });
 
-      user.userProfilePicture = config.upload_folder + config.upload_entities.post_image_folder + user.userProfilePicture;
+      user.userProfilePicture = config.upload_folder + config.upload_entities.user_profile_image_folder + user.userProfilePicture;
       allQuestion[i].user = user;
       
       allQuestion[i].comments = await QuestionsCommentModel.findAll({
