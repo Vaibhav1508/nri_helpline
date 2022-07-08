@@ -6,6 +6,7 @@ let helper = require("../helpers/helpers"),
   config = process.config.global_config,
   CountryModel = require("../models/Country"),
   StateModel = require("../models/State"),
+  CityModal = require("../models/City"),
   BadRequestError = require("../errors/badRequestError");
 
 //#region Country
@@ -370,7 +371,249 @@ const stateDetail = async (req) => {
   return { slides: state };
 };
 
-const changeStateStatus = async (req) => {};
+const changeStateStatus = async (req) => {
+  let state = await StateModel.findOne({
+    where: { stateID: req.body.stateID },
+    raw: true,
+  });
+
+  if (!state) {
+    throw new BadRequestError("State doesn't exists");
+  }
+
+  await StateModel.update(
+    { stateStatus: req.body.stateStatus },
+    { where: { stateID: req.body.stateID } }
+  );
+  return {
+    status: req.body.stateStatus,
+  };
+};
+
+const getStateByCountryID = async (req) => {
+  let state = await StateModel.findAll({
+    where: { countryID: req.params.countryID },
+    raw: true,
+  });
+
+  if (!state) {
+    throw new BadRequestError("State doesn't exists");
+  }
+
+  return { slides: state };
+};
+
+//#endregion
+
+//#region City
+
+const createCity = async (req) => {
+  let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+  if (helper.undefinedOrNull(body)) {
+    throw new BadRequestError("Request body comes empty");
+  }
+  ["cityName", "countryID", "cityStatus", "stateID"].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
+  });
+
+  let cityData = {
+    cityName: body.cityName,
+    cityStatus: body.cityStatus,
+    cityRemarks: body.cityRemarks ? body.cityRemarks : "",
+    countryID: body.countryID,
+    stateID: body.stateID,
+  };
+
+  let city = await CityModal.create(cityData);
+  return { city };
+};
+
+const updateCity = async (req) => {
+  let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+  if (helper.undefinedOrNull(body)) {
+    throw new BadRequestError("Request body comes empty");
+  }
+  if (!body.cityName) {
+    throw new BadRequestError("City Name is required");
+  }
+
+  let city = await CityModal.findOne({
+    where: { cityID: req.params.cityID },
+    raw: true,
+  });
+
+  if (!city) {
+    throw new BadRequestError("City doesn't exists");
+  }
+
+  let updateData = {};
+  let optionalFiled = [
+    "cityID",
+    "cityName",
+    "cityRemarks",
+    "cityStatus",
+    "countryID",
+    "stateID",
+  ];
+  optionalFiled.forEach((x) => {
+    if (body[x]) {
+      updateData[x] = body[x];
+    }
+  });
+
+  await CityModal.update(updateData, {
+    where: { cityID: req.params.cityID },
+    raw: true,
+  });
+  let cityData = await CityModal.findOne({
+    where: { cityID: req.params.cityID },
+    raw: true,
+  });
+
+  return { cityData };
+};
+
+const cityList = async (req) => {
+  let limit = req.body.limit ? parseInt(req.body.limit) : 10;
+  let page = req.body.page || 1;
+  let offset = (page - 1) * limit;
+  let findData = {};
+  if (req.body.filters) {
+    if (req.body.filters.searchtext) {
+      findData["$and"] = [
+        { cityName: { $like: "%" + req.body.filters.searchtext + "%" } },
+      ];
+    }
+  }
+  if (req.body.page || req.body.limit) {
+    let allCity = await CityModal.findAll({
+      where: findData,
+      limit,
+      offset,
+      order: [["cityID", "ASC"]],
+      raw: true,
+    });
+
+    // country Name for all City
+    let countryName = await CountryModel.findAll({});
+
+    // state Name for all City
+    let stateName = await StateModel.findAll({});
+
+    for (let i = 0; i < allCity.length; i++) {
+      allCity[i].countryName = countryName.find(
+        (x) => x.countryID == allCity[i].countryID
+      ).countryName;
+    }
+
+    for (let i = 0; i < allCity.length; i++) {
+      allCity[i].stateName = stateName.find(
+        (x) => x.stateID == allCity[i].stateID
+      ).stateName;
+    }
+
+    let allCityCount = await CityModal.count({
+      where: findData,
+      order: [["cityID", "ASC"]],
+      raw: true,
+    });
+    let _result = { total_count: 0 };
+    _result.slides = allCity;
+    _result.total_count = allCityCount;
+    return _result;
+  } else {
+    let allCity = await CityModal.findAll({
+      where: findData,
+      order: [["cityID", "ASC"]],
+      raw: true,
+    });
+
+    let countryName = await CountryModel.findAll({});
+
+    let stateName = await StateModel.findAll({});
+
+    for (let i = 0; i < allCity.length; i++) {
+      allCity[i].countryName = countryName.find(
+        (x) => x.countryID == allCity[i].countryID
+      ).countryName;
+    }
+
+    for (let i = 0; i < allCity.length; i++) {
+      allCity[i].stateName = stateName.find(
+        (x) => x.stateID == allCity[i].stateID
+      ).stateName;
+    }
+
+    let allCityCount = await CityModal.count({
+      where: findData,
+      order: [["cityID", "ASC"]],
+      raw: true,
+    });
+    let _result = { total_count: 0 };
+    _result.slides = allCity;
+    _result.total_count = allCityCount;
+    return _result;
+  }
+};
+
+const cityDetail = async (req) => {
+  let city = await CityModal.findOne({
+    where: { cityID: req.params.cityID },
+    raw: true,
+  });
+
+  if (!city) {
+    throw new BadRequestError("City doesn't exists");
+  }
+
+  let countryName = await CountryModel.findOne({
+    where: { countryID: city.countryID },
+    raw: true,
+  });
+
+  let stateName = await StateModel.findOne({
+    where: { stateID: city.stateID },
+    raw: true,
+  });
+
+  city.countryName = countryName.countryName;
+  city.stateName = stateName.stateName;
+  return { slides: city };
+};
+
+const changeCityStatus = async (req) => {
+  let city = await CityModal.findOne({
+    where: { cityID: req.body.cityID },
+    raw: true,
+  });
+
+  if (!city) {
+    throw new BadRequestError("City doesn't exists");
+  }
+
+  await CityModal.update(
+    { cityStatus: req.body.cityStatus },
+    { where: { cityID: req.body.cityID } }
+  );
+  return {
+    status: req.body.cityStatus,
+  };
+};
+
+const getCityByStateID = async (req) => {
+  let city = await CityModal.findAll({
+    where: { stateID: req.params.stateID },
+    raw: true,
+  });
+
+  if (!city) {
+    throw new BadRequestError("City doesn't exists");
+  }
+
+  return { slides: city };
+};
 
 //#endregion
 
@@ -385,4 +628,11 @@ module.exports = {
   stateList,
   stateDetail,
   changeStateStatus,
+  getStateByCountryID,
+  createCity,
+  updateCity,
+  cityList,
+  cityDetail,
+  changeCityStatus,
+  getCityByStateID,
 };

@@ -272,6 +272,100 @@ const changeStateStatus = (req, res, next) => {
     .catch(next);
 };
 
+const getStateByCountryID = (req, res, next) => {
+  return masterManager
+    .getStateByCountryID(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+//#endregion
+
+//#region City
+const createCity = (req, res, next) => {
+  return masterManager
+    .createCity(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+const updateCity = (req, res, next) => {
+  return masterManager
+    .updateCity(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+const cityList = (req, res, next) => {
+  return masterManager
+    .cityList(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+const cityDetail = (req, res, next) => {
+  return masterManager
+    .cityDetail(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+const changeCityStatus = (req, res, next) => {
+  return masterManager
+    .changeCityStatus(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+const getCityByStateID = (req, res, next) => {
+  return masterManager
+    .getCityByStateID(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
 //#endregion
 
 module.exports = {
@@ -285,4 +379,11 @@ module.exports = {
   stateList,
   stateDetail,
   changeStateStatus,
+  getStateByCountryID,
+  createCity,
+  updateCity,
+  cityList,
+  cityDetail,
+  changeCityStatus,
+  getCityByStateID,
 };

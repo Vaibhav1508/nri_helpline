@@ -25,5 +25,13 @@ router.put("/update-state/:stateID", controller.updateState);
 router.post("/state-list", controller.stateList);
 router.get("/state-detail/:stateID", controller.stateDetail);
 router.post("/change-state-status", controller.changeStateStatus);
+router.get("/state-by-country/:countryID", controller.getStateByCountryID);
+
+router.post("/create-city", controller.createCity);
+router.put("/update-city/:cityID", controller.updateCity);
+router.post("/city-list", controller.cityList);
+router.get("/city-detail/:cityID", controller.cityDetail);
+router.post("/change-city-status", controller.changeCityStatus);
+router.get("/city-by-state/:stateID", controller.getCityByStateID);
 
 module.exports = router;
