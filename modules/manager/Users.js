@@ -17,6 +17,8 @@ const VocationModal = require("../models/Vocation");
 const CompanyModal = require("../models/Company");
 const userFollowModal = require("../models/UserFollowID");
 const { Op } = require("sequelize");
+const UservocationModel = require("../models/User_vocations");
+const UserSubVocationModel = require("../models/User_subvocations");
 
 let generateAuthToken = async (phone) => {
   return uuidv4();
@@ -590,6 +592,123 @@ const followUser = async (req) => {
   };
 };
 
+const userVocationFollowList = async (req) => {
+  const { userID } = req.params;
+
+  // by userid and uservocationStatus is following
+  let userVocationFollowList = await UservocationModel.findAll({
+    where: {
+      [Op.and]: [{ userID }, { uservocationStatus: "Following" }],
+    },
+    raw: true,
+  });
+
+  // Get followed  SubVocation list
+  let subVocationList = await SubVocationModel.findAll({
+    where: {
+      vocationID: userVocationFollowList.map((x) => x.vocationID),
+    },
+    raw: true,
+  });
+
+  let vocationList = await VocationModal.findAll({
+    where: {},
+    raw: true,
+  });
+
+  // with userVocation id
+  const vocationListFollow = vocationList.map((x) => {
+    let userVocation = userVocationFollowList.find(
+      (y) => y.vocationID === x.vocationID
+    );
+    if (userVocation) {
+      x.isFollow = true;
+    } else {
+      x.isFollow = false;
+    }
+    return {
+      ...x,
+      ...userVocation,
+    };
+  });
+
+  // sort by followed vocation
+  vocationListFollow.sort((a, b) => {
+    if (a.isFollow && !b.isFollow) {
+      return -1;
+    } else if (!a.isFollow && b.isFollow) {
+      return 1;
+    } else {
+      return 0;
+    }
+  });
+
+  return {
+    vocationListFollow,
+  };
+};
+
+const unFollowVocation = async (req) => {
+  const body = req.body.body ? JSON.parse(req.body.body) : req.body;
+  ["userID", "uservocationID"].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
+  });
+
+  // change status to Unfollowed
+  await UservocationModel.update(
+    { uservocationStatus: "Unfollowed" },
+    { where: { userID: body.userID, uservocationID: body.uservocationID } }
+  );
+
+  return {
+    message: "unfollowed",
+  };
+};
+
+const followVocation = async (req) => {
+  const body = req.body.body ? JSON.parse(req.body.body) : req.body;
+  ["userID", "vocationID"].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
+  });
+
+  // check if user already follow this vocation
+  let userVocation = await UservocationModel.findOne({
+    where: {
+      [Op.and]: [{ userID: body.userID }, { vocationID: body.vocationID }],
+    },
+    raw: true,
+  });
+
+  if (userVocation) {
+    // if user already follow this vocation
+    // change status to Following
+    await UservocationModel.update(
+      { uservocationStatus: "Following" },
+      { where: { userID: body.userID, vocationID: body.vocationID } }
+    );
+
+    return {
+      message: "followed",
+    };
+  }
+
+  if (!userVocation) {
+    await UservocationModel.create({
+      userID: body.userID,
+      vocationID: body.vocationID,
+      uservocationStatus: "Following",
+    });
+
+    return {
+      message: "followed",
+    };
+  }
+};
+
 module.exports = {
   Login: Login,
   signout: signout,
@@ -606,4 +725,7 @@ module.exports = {
   getUserFollowers,
   unfollowUser,
   followUser,
+  userVocationFollowList,
+  unFollowVocation,
+  followVocation,
 };

@@ -33,5 +33,8 @@ router.post("/company-details", controller.CompanyDetails);
 router.get("/user-followers/:userID", controller.getUserFollowers);
 router.post("/unfollow-user", controller.unfollowUser);
 router.post("/follow-user", controller.followUser);
+router.get("/vocation-follow-list/:userID", controller.userVocationFollowList);
+router.post("/unfollow-vocation", controller.unFollowVocation);
+router.post("/follow-vocation", controller.followVocation);
 
 module.exports = router;

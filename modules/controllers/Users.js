@@ -685,6 +685,45 @@ const followUser = (req, res, next) => {
     .catch(next);
 };
 
+const userVocationFollowList = (req, res, next) => {
+  return userManager
+    .userVocationFollowList(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+const unFollowVocation = (req, res, next) => {
+  return userManager
+    .unFollowVocation(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+const followVocation = (req, res, next) => {
+  return userManager
+    .followVocation(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
 module.exports = {
   Login: Login,
   changePassword: changePassword,
@@ -701,4 +740,7 @@ module.exports = {
   getUserFollowers,
   unfollowUser,
   followUser,
+  userVocationFollowList,
+  unFollowVocation,
+  followVocation,
 };
