@@ -368,6 +368,74 @@ const getCityByStateID = (req, res, next) => {
 
 //#endregion
 
+let CreateReasons = (req, res, next) => {
+  return masterManager
+      .CreateReasons(req.body)
+      .then(data => {
+          let result = {
+              status: 200,
+              data: data
+          }
+          return res.json(result);
+      })
+      .catch(next);
+}
+
+
+let GetReasons = (req, res, next) => {
+  return masterManager
+      .GetReasons(req.body)
+      .then(data => {
+          let result = {
+              status: 200,
+              data: data
+          }
+          return res.json(result);
+      })
+      .catch(next);
+}
+
+
+let ReasonsUpdate = (req, res, next) => {
+  return masterManager
+      .ReasonsUpdate(req)
+      .then(data => {
+          let result = {
+              status: 200,
+              data: data
+          }
+          return res.json(result);
+      })
+      .catch(next);
+}
+
+
+let ReasonDetail = (req, res, next) => {
+  return masterManager
+      .ReasonDetail(req)
+      .then(data => {
+          let result = {
+              status: 200,
+              data: data
+          }
+          return res.json(result);
+      })
+      .catch(next);
+}
+
+let ChangeReasonStatus = (req, res, next) => {
+  return masterManager
+      .ChangeReasonStatus(req.body)
+      .then(data => {
+          let result = {
+              status: 200,
+              data: data
+          }
+          return res.json(result);
+      })
+      .catch(next);
+}
+
 module.exports = {
   createCountry: createCountry,
   CountryUpdate: CountryUpdate,
@@ -386,4 +454,9 @@ module.exports = {
   cityDetail,
   changeCityStatus,
   getCityByStateID,
+  CreateReasons: CreateReasons,
+  GetReasons: GetReasons,
+  ReasonsUpdate: ReasonsUpdate,
+  ReasonDetail: ReasonDetail,
+  ChangeReasonStatus: ChangeReasonStatus
 };

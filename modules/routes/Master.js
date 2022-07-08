@@ -34,4 +34,11 @@ router.get("/city-detail/:cityID", controller.cityDetail);
 router.post("/change-city-status", controller.changeCityStatus);
 router.get("/city-by-state/:stateID", controller.getCityByStateID);
 
+//reasons api
+router.post("/create-reasons", controller.CreateReasons);
+router.post("/get-reasons", controller.GetReasons);
+router.put("/reason-update/:reasonID", controller.ReasonsUpdate);
+router.post("/reasondetail/:reasonID", controller.ReasonDetail);
+router.post("/changereasonstatus", controller.ChangeReasonStatus);
+
 module.exports = router;
