@@ -7,6 +7,7 @@ let helper = require("../helpers/helpers"),
   CountryModel = require("../models/Country"),
   StateModel = require("../models/State"),
   CityModal = require("../models/City"),
+  ReasonsModel = require('../models/Reasons'),
   BadRequestError = require("../errors/badRequestError");
 
 //#region Country
@@ -672,6 +673,139 @@ const getCityByStateID = async (req) => {
 
 //#endregion
 
+//create reasons
+let CreateReasons = async(body) => {
+  
+  // let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+  console.log(body)
+  if (helper.undefinedOrNull(body)) {
+      throw new BadRequestError("Request body comes empty");
+  }
+  ['reasonName'].forEach(x => {
+      if (!body[x]) {
+          throw new BadRequestError(x + " is required");
+      }
+  });
+
+  let user = await ReasonsModel
+      .findOne({ where: { reasonName: body.reasonName }, raw: true });
+
+  if (user) {
+      throw new BadRequestError("Reason already exists");
+  }
+
+  let reasonStatus = body.reasonStatus == 1 ? 'Active' : 'Inactive';
+  let reasonsData = {
+      reasonName: body.reasonName,
+      reasonStatus: reasonStatus
+  }
+  await ReasonsModel.create(reasonsData);
+  return { slides: 'Reason created successfully' };
+}
+
+
+//get reasons
+
+let GetReasons = async(body) => {
+  try{
+    let limit = (body.limit) ? parseInt(body.limit) : 10;
+    let page = body.page || 1;
+    let offset = (page - 1) * limit;
+    let allUser = await ReasonsModel.findAll({
+        limit,
+        offset,
+        order: [
+            ['reasonID', 'DESC']
+        ],
+        raw: true
+    });
+    let allUserCount = await ReasonsModel.count({
+        order: [
+            ['reasonID', 'DESC']
+        ],
+        raw: true
+    });
+    let _result = { total_count: 0 };
+    _result.slides = allUser;
+    _result.total_count = allUserCount;
+    return _result;
+  }
+  catch(err){
+    console.log(err)
+    
+  }
+ 
+}
+
+
+//update reasons
+
+let ReasonsUpdate = async(req) => {
+  let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+  if (helper.undefinedOrNull(body)) {
+      throw new BadRequestError("body_empty");
+  }
+  ['reasonName'].forEach(x => {
+      if (!body[x]) {
+          throw new BadRequestError(x + " is required");
+      }
+  });
+  let updateData = {};
+  let optionalFiled = ['reasonName', 'reasonStatus'];
+  optionalFiled.forEach(x => {
+      if (body[x]) {
+          updateData[x] = body[x];
+      }
+  });
+  await ReasonsModel.update(updateData, { where: { reasonID: req.params.reasonID }, raw: true });
+  let industry = await ReasonsModel.findOne({ where: { reasonID: req.params.reasonID }, raw: true });
+
+  return { slides: industry }
+}
+
+
+//get detail
+
+let ReasonDetail = async(req) => {
+  if (!req.params.reasonID) {
+      throw new BadRequestError("reasonID is required");
+  }
+  let ReasonData = await ReasonsModel.findOne({
+      where: { reasonID: req.params.reasonID },
+      raw: true
+  });
+  return { slides: ReasonData };
+}
+
+//change status
+let ChangeReasonStatus = async(body) => {
+  if (helper.undefinedOrNull(body)) {
+      throw new BadRequestError("body_empty");
+  }
+
+  if (helper.undefinedOrNull(body.reasonID)) {
+      throw new BadRequestError("reasonID is required");
+  }
+  if (helper.undefinedOrNull(body.status)) {
+      throw new BadRequestError("Status is required");
+  }
+
+  let reason = await ReasonsModel
+      .findOne({ where: { reasonID: body.reasonID }, raw: true });
+  if (!reason) {
+      throw new BadRequestError("Provided reason is not available");
+  }
+  if (reason.reasonStatus == 'Active' && body.status == 1) {
+      throw new BadRequestError("Reason is Already activated");
+  }
+  if (reason.reasonStatus == 'Inactive' && body.status != 1) {
+      throw new BadRequestError("Reason is Already inactivated");
+  }
+  let status = body.status == 1 ? 'Active' : 'Inactive'
+  await ReasonsModel.update({ reasonStatus: status }, { where: { reasonID: reason.reasonID }, raw: true });
+  return { status: body.status }
+}
+
 module.exports = {
   createCountry: createCountry,
   CountryUpdate: CountryUpdate,
@@ -690,4 +824,9 @@ module.exports = {
   cityDetail,
   changeCityStatus,
   getCityByStateID,
+  CreateReasons: CreateReasons,
+  GetReasons: GetReasons,
+  ReasonsUpdate: ReasonsUpdate,
+  ReasonDetail: ReasonDetail,
+  ChangeReasonStatus: ChangeReasonStatus
 };
