@@ -23,6 +23,7 @@ const UsersModal = require("../models/Users");
 const QuestionsAnswerModal = require("../models/QuestionsAnswer");
 const sequelize_mysql = require("../helpers/sequelize-mysql");
 const sequelize = require("sequelize");
+const { voilatedKeywords } = require("../helpers/voilatedKeywords");
 
 let generateAuthToken = async (phone) => {
   return uuidv4();
@@ -30,9 +31,11 @@ let generateAuthToken = async (phone) => {
 
 let CreateQuestion = async (req) => {
   let body = req.body.body ? JSON.parse(req.body.body) : req.body;
-  if (helper.undefinedOrNull(body)) {
-    throw new BadRequestError("Request body comes empty");
-  }
+  // if (helper.undefinedOrNull(body)) {
+  //   throw new BadRequestError("Request body comes empty");
+  // }
+  // return true if question contains any of the voilatedKeywords
+
   ["queDescription", "queType", "queMode", "vocationID"].forEach((x) => {
     if (!body[x]) {
       throw new BadRequestError(x + " is required");
@@ -51,6 +54,12 @@ let CreateQuestion = async (req) => {
 
     let questionData = {};
     if (body?.queType == "Question") {
+      let queStatus = "Active";
+      if (
+        voilatedKeywords.some((x) => body.queQuestion.toLowerCase().includes(x))
+      ) {
+        queStatus = "Voilated";
+      }
       questionData = {
         queQuestion: body.queQuestion,
         queDescription: body.queDescription,
@@ -58,6 +67,7 @@ let CreateQuestion = async (req) => {
         queMode: body.queMode,
         vocationID: body.vocationID,
         userID: body.userID,
+        queStatus: queStatus,
       };
     } else {
       let filename = "";
