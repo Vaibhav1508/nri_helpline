@@ -1,82 +1,82 @@
-let questionManager = require('../manager/Question');
+let questionManager = require("../manager/Question");
 
 /**
-* @swagger
-* /api/v1/vocation/createvocation:
-*   post:
-*     summary: create vocation.
-*     tags:
-*      - Vocation
-*     parameters :
-*     - name: x-auth-api-key
-*       in: header   
-*       description: an authorization header
-*       required: true
-*       type: string 
-*     - name: Accept-Language
-*       in: header
-*       description: Language
-*       required: false
-*       type: string 
-*     requestBody:
-*       required: true
-*       content:
-*         multipart/form-data:
-*           schema:
-*             type: object
-*             properties:
-*               vocationName:
-*                 type: string
-*                 example: aavvcc
-*                 paramType: body
-*               vocationImage:
-*                 type: file
-*                 example: ''
-*               vocationRemarks:
-*                 type: string
-*                 example: aavvcc
-*                 paramType: body
-*               vocationStatus:
-*                 type: integer
-*                 example: aavvcc
-*                 paramType: body
-*     responses:
-*       200:
-*         description: user object
-*         content:
-*           application/json:
-*             schema:
-*               type: object
-*               properties:
-*                 data:
-*                   type: object
-*       400:
-*         description: error in request processing
-*         content:
-*           application/json:
-*             schema:
-*               type: object
-*               properties:
-*                 message:
-*                   type: string
-*                 status:
-*                   type: integer
-*                   example: 400
-*/
+ * @swagger
+ * /api/v1/vocation/createvocation:
+ *   post:
+ *     summary: create vocation.
+ *     tags:
+ *      - Vocation
+ *     parameters :
+ *     - name: x-auth-api-key
+ *       in: header
+ *       description: an authorization header
+ *       required: true
+ *       type: string
+ *     - name: Accept-Language
+ *       in: header
+ *       description: Language
+ *       required: false
+ *       type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               vocationName:
+ *                 type: string
+ *                 example: aavvcc
+ *                 paramType: body
+ *               vocationImage:
+ *                 type: file
+ *                 example: ''
+ *               vocationRemarks:
+ *                 type: string
+ *                 example: aavvcc
+ *                 paramType: body
+ *               vocationStatus:
+ *                 type: integer
+ *                 example: aavvcc
+ *                 paramType: body
+ *     responses:
+ *       200:
+ *         description: user object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: error in request processing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *                   example: 400
+ */
 let CreateQuestion = (req, res, next) => {
-   return questionManager
-       .CreateQuestion(req)
-       .then(data => {
-           let result = {
-               status:200,
-               data: data
-           }
-           return res.json(result);
-       })
-       .catch(next);
-} 
+  return questionManager
+    .CreateQuestion(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
- /**
+/**
  * @swagger
  * /api/v1/vocation/QuestionList:
  *   post:
@@ -85,15 +85,15 @@ let CreateQuestion = (req, res, next) => {
  *      - Vocation
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -131,19 +131,19 @@ let CreateQuestion = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let QuestionList = (req, res, next) => {
-    return questionManager
-        .QuestionList(req.body)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-}
+  return questionManager
+    .QuestionList(req.body)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
 /**
  * @swagger
@@ -154,15 +154,15 @@ let QuestionList = (req, res, next) => {
  *      - Vocation
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -200,19 +200,19 @@ let QuestionList = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let QuestionLike = (req, res, next) => {
-    return questionManager
-        .QuestionLike(req)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-}
+  return questionManager
+    .QuestionLike(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
 /**
  * @swagger
@@ -223,15 +223,15 @@ let QuestionLike = (req, res, next) => {
  *      - Vocation
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -269,19 +269,19 @@ let QuestionLike = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let QuestionUnlike = (req, res, next) => {
-    return questionManager
-        .QuestionUnlike(req)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-}
+  return questionManager
+    .QuestionUnlike(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
 /**
  * @swagger
@@ -292,15 +292,15 @@ let QuestionUnlike = (req, res, next) => {
  *      - Vocation
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -338,21 +338,21 @@ let QuestionUnlike = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let QuestionsAnswer = (req, res, next) => {
-    return questionManager
-        .QuestionsAnswer(req)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-}
+  return questionManager
+    .QuestionsAnswer(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
- /**
+/**
  * @swagger
  * /api/v1/vocation/QuestionList:
  *   post:
@@ -361,15 +361,15 @@ let QuestionsAnswer = (req, res, next) => {
  *      - Vocation
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -407,19 +407,19 @@ let QuestionsAnswer = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let MyQuestionList = (req, res, next) => {
-    return questionManager
-        .MyQuestionList(req.body)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-}
+  return questionManager
+    .MyQuestionList(req.body)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
 /**
  * @swagger
@@ -430,15 +430,15 @@ let MyQuestionList = (req, res, next) => {
  *      - Vocation
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -476,19 +476,19 @@ let MyQuestionList = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let QuestionsComment = (req, res, next) => {
-    return questionManager
-        .QuestionsComment(req)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-}
+  return questionManager
+    .QuestionsComment(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
 /**
  * @swagger
@@ -499,15 +499,15 @@ let QuestionsComment = (req, res, next) => {
  *      - Vocation
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -545,19 +545,19 @@ let QuestionsComment = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let QuestionsBookmark = (req, res, next) => {
-    return questionManager
-        .QuestionsBookmark(req)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-}
+  return questionManager
+    .QuestionsBookmark(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
 /**
  * @swagger
@@ -568,15 +568,15 @@ let QuestionsBookmark = (req, res, next) => {
  *      - Vocation
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -614,19 +614,19 @@ let QuestionsBookmark = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let QuestionsUnBookmark = (req, res, next) => {
-    return questionManager
-        .QuestionsUnBookmark(req)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-}
+  return questionManager
+    .QuestionsUnBookmark(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
 /**
  * @swagger
@@ -637,15 +637,15 @@ let QuestionsUnBookmark = (req, res, next) => {
  *      - Vocation
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -683,19 +683,19 @@ let QuestionsUnBookmark = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let QuestionsAnswersReply = (req, res, next) => {
-    return questionManager
-        .QuestionsAnswersReply(req)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-}
+  return questionManager
+    .QuestionsAnswersReply(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
 /**
  * @swagger
@@ -706,15 +706,15 @@ let QuestionsAnswersReply = (req, res, next) => {
  *      - Vocation
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -752,19 +752,19 @@ let QuestionsAnswersReply = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let QuestionsAnswerLike = (req, res, next) => {
-    return questionManager
-        .QuestionsAnswerLike(req)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-}
+  return questionManager
+    .QuestionsAnswerLike(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
 /**
  * @swagger
@@ -775,15 +775,15 @@ let QuestionsAnswerLike = (req, res, next) => {
  *      - Vocation
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -821,19 +821,19 @@ let QuestionsAnswerLike = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let QuestionsAnswerUnlike = (req, res, next) => {
-    return questionManager
-        .QuestionsAnswerUnlike(req)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-}
+  return questionManager
+    .QuestionsAnswerUnlike(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
 /**
  * @swagger
@@ -844,15 +844,15 @@ let QuestionsAnswerUnlike = (req, res, next) => {
  *      - Vocation
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -890,19 +890,19 @@ let QuestionsAnswerUnlike = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let QuestionsCommentLike = (req, res, next) => {
-    return questionManager
-        .QuestionsCommentLike(req)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-}
+  return questionManager
+    .QuestionsCommentLike(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
 /**
  * @swagger
@@ -913,15 +913,15 @@ let QuestionsCommentLike = (req, res, next) => {
  *      - Vocation
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -959,19 +959,19 @@ let QuestionsCommentLike = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let QuestionsCommentUnLike = (req, res, next) => {
-    return questionManager
-        .QuestionsCommentUnLike(req)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-}
+  return questionManager
+    .QuestionsCommentUnLike(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
 /**
  * @swagger
@@ -982,15 +982,15 @@ let QuestionsCommentUnLike = (req, res, next) => {
  *      - Vocation
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -1028,19 +1028,19 @@ let QuestionsCommentUnLike = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let QuestionArchive = (req, res, next) => {
-    return questionManager
-        .QuestionArchive(req)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-}
+  return questionManager
+    .QuestionArchive(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
 /**
  * @swagger
@@ -1051,15 +1051,15 @@ let QuestionArchive = (req, res, next) => {
  *      - Vocation
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -1097,19 +1097,19 @@ let QuestionArchive = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let MyArchivedQuestionsList = (req, res, next) => {
-    return questionManager
-        .MyArchivedQuestionsList(req)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-}
+  return questionManager
+    .MyArchivedQuestionsList(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
 /**
  * @swagger
@@ -1120,15 +1120,15 @@ let MyArchivedQuestionsList = (req, res, next) => {
  *      - Vocation
  *     parameters :
  *     - name: x-auth-api-key
- *       in: header   
+ *       in: header
  *       description: an authorization header
  *       required: true
- *       type: string 
+ *       type: string
  *     - name: Accept-Language
- *       in: header   
+ *       in: header
  *       description: Language
  *       required: false
- *       type: string 
+ *       type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -1166,53 +1166,78 @@ let MyArchivedQuestionsList = (req, res, next) => {
  *                 status:
  *                   type: integer
  *                   example: 400
-*/
+ */
 let QuestionActivate = (req, res, next) => {
-    return questionManager
-        .QuestionActivate(req)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
-}
-
+  return questionManager
+    .QuestionActivate(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
 let updateQuestion = (req, res, next) => {
-    return questionManager
-        .updateQuestion(req)
-        .then(data => {
-            let result = {
-                status:200,
-                data: data
-            }
-            return res.json(result);
-        })
-        .catch(next);
- } 
+  return questionManager
+    .updateQuestion(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
+const getVoilatedQuestions = (req, res, next) => {
+  return questionManager
+    .getVoilatedQuestion(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
+const approveAndRejectQuestion = (req, res, next) => {
+  return questionManager
+    .approveAndRejectQuestion(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
 module.exports = {
-    CreateQuestion: CreateQuestion,
-    QuestionList:QuestionList,
-    MyQuestionList:MyQuestionList,
-    QuestionLike: QuestionLike,
-    QuestionUnlike:QuestionUnlike,
-    QuestionsAnswer: QuestionsAnswer,
-    QuestionsComment:QuestionsComment,
-    QuestionsBookmark:QuestionsBookmark,
-    QuestionsUnBookmark:QuestionsUnBookmark,
-    QuestionsAnswersReply:QuestionsAnswersReply,
-    QuestionsAnswerLike:QuestionsAnswerLike,
-    QuestionsAnswerUnlike:QuestionsAnswerUnlike,
-    QuestionsCommentLike:QuestionsCommentLike,
-    QuestionsCommentUnLike:QuestionsCommentUnLike,
-    QuestionArchive:QuestionArchive,
-    MyArchivedQuestionsList: MyArchivedQuestionsList,
-    QuestionActivate:QuestionActivate,
-    updateQuestion:updateQuestion
- };
+  CreateQuestion: CreateQuestion,
+  QuestionList: QuestionList,
+  MyQuestionList: MyQuestionList,
+  QuestionLike: QuestionLike,
+  QuestionUnlike: QuestionUnlike,
+  QuestionsAnswer: QuestionsAnswer,
+  QuestionsComment: QuestionsComment,
+  QuestionsBookmark: QuestionsBookmark,
+  QuestionsUnBookmark: QuestionsUnBookmark,
+  QuestionsAnswersReply: QuestionsAnswersReply,
+  QuestionsAnswerLike: QuestionsAnswerLike,
+  QuestionsAnswerUnlike: QuestionsAnswerUnlike,
+  QuestionsCommentLike: QuestionsCommentLike,
+  QuestionsCommentUnLike: QuestionsCommentUnLike,
+  QuestionArchive: QuestionArchive,
+  MyArchivedQuestionsList: MyArchivedQuestionsList,
+  QuestionActivate: QuestionActivate,
+  updateQuestion: updateQuestion,
+  getVoilatedQuestions: getVoilatedQuestions,
+  approveAndRejectQuestion: approveAndRejectQuestion,
+};

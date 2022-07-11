@@ -15,433 +15,468 @@ let helper = require("../helpers/helpers"),
   QuestionsAnswerUnlikeModel = require("../models/QuestionsAnswerUnlike"),
   QuestionsCommentLikeModel = require("../models/QuestionsCommentLike"),
   QuestionsCommentUnlikeModel = require("../models/QuestionsCommentUnlike"),
-  QuestionImagesModel = require('../models/QuestionImages'),
+  QuestionImagesModel = require("../models/QuestionImages"),
   BadRequestError = require("../errors/badRequestError");
 const { v4: uuidv4 } = require("uuid");
 const QuestionsAnswersReplyModal = require("../models/QuestionsAnswersReply");
 const UsersModal = require("../models/Users");
 const QuestionsAnswerModal = require("../models/QuestionsAnswer");
+const sequelize_mysql = require("../helpers/sequelize-mysql");
+const sequelize = require("sequelize");
 
 let generateAuthToken = async (phone) => {
   return uuidv4();
 };
 
 let CreateQuestion = async (req) => {
-
   let body = req.body.body ? JSON.parse(req.body.body) : req.body;
   if (helper.undefinedOrNull(body)) {
     throw new BadRequestError("Request body comes empty");
   }
-  ["queDescription", "queType", "queMode", "vocationID"].forEach(
-    (x) => {
-      if (!body[x]) {
-        throw new BadRequestError(x + " is required");
-      }
+  ["queDescription", "queType", "queMode", "vocationID"].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
     }
-  );
-    
-    try {
-      let question = await QuestionModel.findOne({
-        where: { queQuestion: body.queQuestion },
-        raw: true,
-      });
-    
-      if (question) {
-        throw new BadRequestError("Question already exists");
-      }
-    
-      let questionData = {};
-      if (body?.queType == "Question") {
-        questionData = {
-          queQuestion: body.queQuestion,
-          queDescription: body.queDescription,
-          queType: body.queType,
-          queMode: body.queMode,
-          vocationID: body.vocationID,
-          userID: body.userID,
-        };
-      } else {
-        let filename = "";
-        try {
-          filename = req.file.filename;
-        } catch (error) {}
-    
-        // if (!filename) {
-        //   throw new BadRequestError("Upload Any Image");
-        // }
-    
-        questionData = {
-          vocationID: body.vocationID,
-          queQuestion:'abc',
-          queDescription: body.queDescription,
-          queType: body.queType,
-          queMode: body.queMode,
-          userID: body.userID,
-        };
-      
-      }
-      let questionDetail = await QuestionModel.create(questionData);
-      let createdQue = await QuestionModel.findOne({
-        where : {vocationID: body.vocationID,queDescription: body.queDescription, queType: body.queType,userID: body.userID},
-        raw: true
-      })
+  });
 
-      let values = []
-      
-      if(req.files){
-        for(let i=0; i< req.files.length; i++) {
-          values.push({
-            queID : createdQue.queID,
-            userID : body.userID,
-            image : req.files[i].filename
-          })
-        }
-        let queImages = await QuestionImagesModel.bulkCreate(values, {returning: true})
-      }
+  try {
+    let question = await QuestionModel.findOne({
+      where: { queQuestion: body.queQuestion },
+      raw: true,
+    });
 
-    
-      // if (body?.queType == "Post") {
-      //   questionDetail.queQuestion =
-      //     config.upload_folder +
-      //     config.upload_entities.post_image_folder +
-      //     questionDetail.queQuestion;
-      // }
-    
-      // emit realTimeFeed event to all users
-      let realTimeFeed = {
-        type: "realTimeFeed",
-        data: {
-          type: "question",
-          data: questionDetail,
-        },
+    if (question) {
+      throw new BadRequestError("Question already exists");
+    }
+
+    let questionData = {};
+    if (body?.queType == "Question") {
+      questionData = {
+        queQuestion: body.queQuestion,
+        queDescription: body.queDescription,
+        queType: body.queType,
+        queMode: body.queMode,
+        vocationID: body.vocationID,
+        userID: body.userID,
       };
-      req.io.emit("realTimeFeed", realTimeFeed);
-      return { slides: questionDetail };
-    } catch (err) {
-      console.log(err)
+    } else {
+      let filename = "";
+      try {
+        filename = req.file.filename;
+      } catch (error) {}
+
+      // if (!filename) {
+      //   throw new BadRequestError("Upload Any Image");
+      // }
+
+      questionData = {
+        vocationID: body.vocationID,
+        queQuestion: "abc",
+        queDescription: body.queDescription,
+        queType: body.queType,
+        queMode: body.queMode,
+        userID: body.userID,
+      };
     }
- 
+    let questionDetail = await QuestionModel.create(questionData);
+    let createdQue = await QuestionModel.findOne({
+      where: {
+        vocationID: body.vocationID,
+        queDescription: body.queDescription,
+        queType: body.queType,
+        userID: body.userID,
+      },
+      raw: true,
+    });
+
+    let values = [];
+
+    if (req.files) {
+      for (let i = 0; i < req.files.length; i++) {
+        values.push({
+          queID: createdQue.queID,
+          userID: body.userID,
+          image: req.files[i].filename,
+        });
+      }
+      let queImages = await QuestionImagesModel.bulkCreate(values, {
+        returning: true,
+      });
+    }
+
+    // if (body?.queType == "Post") {
+    //   questionDetail.queQuestion =
+    //     config.upload_folder +
+    //     config.upload_entities.post_image_folder +
+    //     questionDetail.queQuestion;
+    // }
+
+    // emit realTimeFeed event to all users
+    let realTimeFeed = {
+      type: "realTimeFeed",
+      data: {
+        type: "question",
+        data: questionDetail,
+      },
+    };
+    req.io.emit("realTimeFeed", realTimeFeed);
+    return { slides: questionDetail };
+  } catch (err) {
+    console.log(err);
+  }
 };
 
 let QuestionList = async (body) => {
-  let limit = body.limit ? parseInt(body.limit) : 10;
-  let page = body.page || 1;
-  let offset = (page - 1) * limit;
-  let findData = { queStatus: "Active", queMode: 'Published' };
-  if (body.filters) {
-    if (body.filters.searchtext) {
-      findData["$and"] = [
-        { queType: { $like: "%" + body.filters.searchtext + "%" } },
-        { queDescription: { $like: "%" + body.filters.searchtext + "%" } },
-      ];
+  try {
+    let limit = body.limit ? parseInt(body.limit) : 10;
+    let page = body.page || 1;
+    let offset = (page - 1) * limit;
+    let findData = { queStatus: "Active", queMode: "Published" };
+    if (body.filters) {
+      if (body.filters.searchtext) {
+        findData["$and"] = [
+          { queType: { $like: "%" + body.filters.searchtext + "%" } },
+          { queDescription: { $like: "%" + body.filters.searchtext + "%" } },
+        ];
+      }
     }
-  }
-  if (body.page || body.limit) {
-    let allQuestion = await QuestionModel.findAll({
-      where: findData,
-      limit,
-      offset,
-      order: [["queID", "DESC"]],
-      raw: true,
-    });
+    if (body.page || body.limit) {
+      let allQuestion = await QuestionModel.findAll({
+        where: findData,
+        limit,
+        offset,
+        order: [["queID", "DESC"]],
+        raw: true,
+      });
 
-    for (let i = 0; i < allQuestion.length; i++) {
-      if (allQuestion[i].queType == "Post") {
-        allQuestion[i].queQuestion =
-          config.upload_folder +
-          config.upload_entities.post_image_folder +
-          allQuestion[i].queQuestion;
-      }
-
-      if (allQuestion[i].queType == "Post") {
-        
-        let queImages = await QuestionImagesModel.findAll({
-          where : { queID : allQuestion[i].queID }
-        })
-
-        let img = []
-        for(let i = 0; i < queImages.length; i++ ) {
-          img.push(config.upload_folder +
-          config.upload_entities.post_image_folder +
-          queImages[i].image);
+      for (let i = 0; i < allQuestion.length; i++) {
+        if (allQuestion[i].queType == "Post") {
+          allQuestion[i].queQuestion =
+            config.upload_folder +
+            config.upload_entities.post_image_folder +
+            allQuestion[i].queQuestion;
         }
-        allQuestion[i].queImages = img;
 
-      }
+        if (allQuestion[i].queType == "Post") {
+          let queImages = await QuestionImagesModel.findAll({
+            where: { queID: allQuestion[i].queID },
+          });
 
-      let liked = await QuestionLikeModel.count({
-        where: { queID: allQuestion[i].queID, userID: body.userID },
-        raw: true,
-      });
+          let img = [];
+          for (let i = 0; i < queImages.length; i++) {
+            img.push(
+              config.upload_folder +
+                config.upload_entities.post_image_folder +
+                queImages[i].image
+            );
+          }
+          allQuestion[i].queImages = img;
+        }
 
-      allQuestion[i].isLiked = liked == 1 ? true : false
+        let liked = await QuestionLikeModel.count({
+          where: { queID: allQuestion[i].queID, userID: body.userID },
+          raw: true,
+        });
 
-      let unliked = await QuestionUnlikeModel.count({
-        where: { queID: allQuestion[i].queID, userID: body.userID },
-        raw: true,
-      });
-      
-      allQuestion[i].isUnliked = unliked == 1 ? true : false
+        allQuestion[i].isLiked = liked == 1 ? true : false;
 
-      allQuestion[i].queTotalAnswerCount = await QuestionsAnswerModel.count({
-        where: { queID: allQuestion[i].queID },
-        raw: true,
-      });
+        let unliked = await QuestionUnlikeModel.count({
+          where: { queID: allQuestion[i].queID, userID: body.userID },
+          raw: true,
+        });
 
-      allQuestion[i].queTotalLikeCount = await QuestionLikeModel.count({
-        where: { queID: allQuestion[i].queID },
-        raw: true,
-      });
+        allQuestion[i].isUnliked = unliked == 1 ? true : false;
 
-      allQuestion[i].queTotalDislikeCount = await QuestionUnlikeModel.count({
-        where: { queID: allQuestion[i].queID },
-        raw: true,
-      });
-
-      allQuestion[i].queTotalBookmarkCount = await QuestionsBookmarkModel.count(
-        {
+        allQuestion[i].queTotalAnswerCount = await QuestionsAnswerModel.count({
           where: { queID: allQuestion[i].queID },
           raw: true,
-        }
-      );
-
-      allQuestion[i].queTotalCommentCount = await QuestionsCommentModel.count({
-        where: { queID: allQuestion[i].queID },
-        raw: true,
-      });
-
-      let user = await UsersModal.findOne({
-        where: { userID: allQuestion[i].userID },
-        attributes : ['userFirstName','userLastName','userProfilePicture'],
-        raw: true,
-      });
-
-      user.userProfilePicture = config.upload_folder + config.upload_entities.user_profile_image_folder + user.userProfilePicture;
-      allQuestion[i].user = user
-
-      allQuestion[i].comments = await QuestionsCommentModel.findAll({
-        where: { queID: allQuestion[i].queID },
-        raw: true,
-      });
-
-      for(let i = 0; i < allQuestion[i].comments.length; i++) {
-        allQuestion[i].comments[i].user = await UsersModal.findOne({
-          where: { userID: allQuestion[i].comments[i].userID },
-          attributes : ['userFirstName','userLastName','userProfilePicture'],
-          raw: true,
         });
 
-        // Comment Like count will be done here
-        allQuestion[i].comments[j].commentsLikeCount = await QuestionsCommentLikeModel.count({
-          where: { queCommentID: allQuestion[i].comments[j]?.queCommentID },
-          raw: true,
-        })
-
-        // Comment Dislikes count will be done here
-        allQuestion[i].comments[j].commentsUnlikeCount = await QuestionsCommentUnlikeModel.count({
-          where: { queCommentID: allQuestion[i].comments[j]?.queCommentID },
-          raw: true,
-        })
-
-      }
-
-      allQuestion[i].answer = await QuestionsAnswerModal.findAll({
-        where: { queID: allQuestion[i].queID },
-        raw: true,
-      });
-
-      for(let j = 0; j < allQuestion[i].answer?.length; j++) {
-        allQuestion[i].answer[j].user = await UsersModal.findOne({
-          where: { userID: allQuestion[i].answer[j]?.userID },
-          attributes : ['userFirstName','userLastName','userProfilePicture'],
-          raw: true,
-        });
-
-        try {
-          
-          allQuestion[i].answer[j].answersreply = await QuestionsAnswersReplyModal.findOne({
-            where: { answerID: allQuestion[i].answer[j]?.answerID },
-            raw: true,
-          });
-  
-          for(let k = 0; k < allQuestion[i].answer[j]?.answersreply?.length; j++) {
-            allQuestion[i].answer[j].answersreply[k].user = await UsersModal.findOne({
-              where: { userID: allQuestion[i].answer[j].answersreply[k]?.userID },
-              attributes : ['userFirstName','userLastName','userProfilePicture'],
-              raw: true,
-            });
-          }
-
-        } catch(err) {
-          console.log(err)
-        }
-
-      }
-    }
-    let allQuestionCount = await QuestionModel.count({
-      where: findData,
-      order: [["queID", "DESC"]],
-      raw: true,
-    });
-
-    let _result = { total_count: 0 };
-    _result.slides = allQuestion;
-    _result.total_count = allQuestionCount;
-    return _result;
-  } else {
-    let allQuestion = await QuestionModel.findAll({
-      where: findData,
-      order: [["queID", "DESC"]],
-      raw: true,
-    });
-    for (let i = 0; i < allQuestion.length; i++) {
-      if (allQuestion[i].queType == "Post") {
-        allQuestion[i].queQuestion =
-          config.upload_folder +
-          config.upload_entities.post_image_folder +
-          allQuestion[i].queQuestion;
-      }
-
-      if (allQuestion[i].queType == "Post") {
-        
-        let queImages = await QuestionImagesModel.findAll({
-          where : { queID : allQuestion[i].queID }
-        })
-
-        let img = []
-        for(let i = 0; i < queImages.length; i++ ) {
-          img.push(config.upload_folder +
-          config.upload_entities.post_image_folder +
-          queImages[i].image);
-        }
-        allQuestion[i].queImages = img;
-
-      }
-
-      let bookmarked = await QuestionsBookmarkModel.count({
-        where: { queID: allQuestion[i].queID, userID: body.userID },
-        raw: true,
-      });
-
-      allQuestion[i].isBookMarked = bookmarked == 1 ? true : false
-
-      let liked = await QuestionLikeModel.count({
-        where: { queID: allQuestion[i].queID, userID: body.userID },
-        raw: true,
-      });
-      
-      allQuestion[i].isLiked = liked == 1 ? true : false
-
-      let unliked = await QuestionUnlikeModel.count({
-        where: { queID: allQuestion[i].queID, userID: body.userID },
-        raw: true,
-      });
-      
-      allQuestion[i].isUnliked = unliked == 1 ? true : false
-      
-      allQuestion[i].queTotalAnswerCount = await QuestionsAnswerModel.count({
-        where: { queID: allQuestion[i].queID },
-        raw: true,
-      });
-
-      allQuestion[i].queTotalLikeCount = await QuestionLikeModel.count({
-        where: { queID: allQuestion[i].queID },
-        raw: true,
-      });
-
-      allQuestion[i].queTotalDislikeCount = await QuestionUnlikeModel.count({
-        where: { queID: allQuestion[i].queID },
-        raw: true,
-      });
-
-      allQuestion[i].queTotalBookmarkCount = await QuestionsBookmarkModel.count(
-        {
+        allQuestion[i].queTotalLikeCount = await QuestionLikeModel.count({
           where: { queID: allQuestion[i].queID },
           raw: true,
-        }
-      );
+        });
 
-      allQuestion[i].queTotalCommentCount = await QuestionsCommentModel.count({
-        where: { queID: allQuestion[i].queID },
-        raw: true,
-      });
-
-      let user = await UsersModal.findOne({
-        where: { userID: allQuestion[i].userID },
-        attributes : ['userFirstName','userLastName','userProfilePicture'],
-        raw: true,
-      });
-
-      user.userProfilePicture = config.upload_folder + config.upload_entities.user_profile_image_folder + user.userProfilePicture;
-      allQuestion[i].user = user
-
-      allQuestion[i].comments = await QuestionsCommentModel.findAll({
-        where: { queID: allQuestion[i].queID },
-        raw: true,
-      });
-
-      for(let i = 0; i < allQuestion[i].comments.length; i++) {
-        allQuestion[i].comments[i].user = await UsersModal.findOne({
-          where: { userID: allQuestion[i].comments[i].userID },
-          attributes : ['userFirstName','userLastName','userProfilePicture'],
+        allQuestion[i].queTotalDislikeCount = await QuestionUnlikeModel.count({
+          where: { queID: allQuestion[i].queID },
           raw: true,
         });
 
-        // Comment Like count will be done here
-        allQuestion[i].comments[j].commentsLikeCount = await QuestionsCommentLikeModel.count({
-          where: { queCommentID: allQuestion[i].comments[j]?.queCommentID },
-          raw: true,
-        })
-
-        // Comment Dislikes count will be done here
-        allQuestion[i].comments[j].commentsUnlikeCount = await QuestionsCommentUnlikeModel.count({
-          where: { queCommentID: allQuestion[i].comments[j]?.queCommentID },
-          raw: true,
-        })
-
-      }
-
-      allQuestion[i].answer = await QuestionsAnswerModal.findAll({
-        where: { queID: allQuestion[i].queID },
-        raw: true,
-      });
-
-      for(let j = 0; j < allQuestion[i].answer?.length; j++) {
-        allQuestion[i].answer[j].user = await UsersModal.findOne({
-          where: { userID: allQuestion[i].answer[j]?.userID },
-          attributes : ['userFirstName','userLastName','userProfilePicture'],
-          raw: true,
-        });
-
-        try {
-          
-          allQuestion[i].answer[j].answersreply = await QuestionsAnswersReplyModal.findOne({
-            where: { answerID: allQuestion[i].answer[j]?.answerID },
+        allQuestion[i].queTotalBookmarkCount =
+          await QuestionsBookmarkModel.count({
+            where: { queID: allQuestion[i].queID },
             raw: true,
           });
-  
-          for(let k = 0; k < allQuestion[i].answer[j]?.answersreply?.length; j++) {
-            allQuestion[i].answer[j].answersreply[k].user = await UsersModal.findOne({
-              where: { userID: allQuestion[i].answer[j].answersreply[k]?.userID },
-              attributes : ['userFirstName','userLastName','userProfilePicture'],
+
+        allQuestion[i].queTotalCommentCount = await QuestionsCommentModel.count(
+          {
+            where: { queID: allQuestion[i].queID },
+            raw: true,
+          }
+        );
+
+        let user = await UsersModal.findOne({
+          where: { userID: allQuestion[i].userID },
+          attributes: ["userFirstName", "userLastName", "userProfilePicture"],
+          raw: true,
+        });
+
+        user.userProfilePicture =
+          config.upload_folder +
+          config.upload_entities.user_profile_image_folder +
+          user.userProfilePicture;
+        allQuestion[i].user = user;
+
+        allQuestion[i].comments = await QuestionsCommentModel.findAll({
+          where: { queID: allQuestion[i].queID },
+          raw: true,
+        });
+
+        for (let i = 0; i < allQuestion[i].comments.length; i++) {
+          allQuestion[i].comments[i].user = await UsersModal.findOne({
+            where: { userID: allQuestion[i].comments[i].userID },
+            attributes: ["userFirstName", "userLastName", "userProfilePicture"],
+            raw: true,
+          });
+
+          // Comment Like count will be done here
+          allQuestion[i].comments[j].commentsLikeCount =
+            await QuestionsCommentLikeModel.count({
+              where: { queCommentID: allQuestion[i].comments[j]?.queCommentID },
               raw: true,
             });
-          }
 
-        } catch(err) {
-          console.log(err)
+          // Comment Dislikes count will be done here
+          allQuestion[i].comments[j].commentsUnlikeCount =
+            await QuestionsCommentUnlikeModel.count({
+              where: { queCommentID: allQuestion[i].comments[j]?.queCommentID },
+              raw: true,
+            });
         }
 
+        allQuestion[i].answer = await QuestionsAnswerModal.findAll({
+          where: { queID: allQuestion[i].queID },
+          raw: true,
+        });
+
+        for (let j = 0; j < allQuestion[i].answer?.length; j++) {
+          allQuestion[i].answer[j].user = await UsersModal.findOne({
+            where: { userID: allQuestion[i].answer[j]?.userID },
+            attributes: ["userFirstName", "userLastName", "userProfilePicture"],
+            raw: true,
+          });
+
+          try {
+            allQuestion[i].answer[j].answersreply =
+              await QuestionsAnswersReplyModal.findOne({
+                where: { answerID: allQuestion[i].answer[j]?.answerID },
+                raw: true,
+              });
+
+            for (
+              let k = 0;
+              k < allQuestion[i].answer[j]?.answersreply?.length;
+              j++
+            ) {
+              allQuestion[i].answer[j].answersreply[k].user =
+                await UsersModal.findOne({
+                  where: {
+                    userID: allQuestion[i].answer[j].answersreply[k]?.userID,
+                  },
+                  attributes: [
+                    "userFirstName",
+                    "userLastName",
+                    "userProfilePicture",
+                  ],
+                  raw: true,
+                });
+            }
+          } catch (err) {
+            console.log(err);
+          }
+        }
       }
+      let allQuestionCount = await QuestionModel.count({
+        where: findData,
+        order: [["queID", "DESC"]],
+        raw: true,
+      });
+
+      let _result = { total_count: 0 };
+      _result.slides = allQuestion;
+      _result.total_count = allQuestionCount;
+      return _result;
+    } else {
+      let allQuestion = await QuestionModel.findAll({
+        where: findData,
+        order: [["queID", "DESC"]],
+        raw: true,
+      });
+      for (let i = 0; i < allQuestion.length; i++) {
+        if (allQuestion[i].queType == "Post") {
+          allQuestion[i].queQuestion =
+            config.upload_folder +
+            config.upload_entities.post_image_folder +
+            allQuestion[i].queQuestion;
+        }
+
+        if (allQuestion[i].queType == "Post") {
+          let queImages = await QuestionImagesModel.findAll({
+            where: { queID: allQuestion[i].queID },
+          });
+
+          let img = [];
+          for (let i = 0; i < queImages.length; i++) {
+            img.push(
+              config.upload_folder +
+                config.upload_entities.post_image_folder +
+                queImages[i].image
+            );
+          }
+          allQuestion[i].queImages = img;
+        }
+
+        let bookmarked = await QuestionsBookmarkModel.count({
+          where: { queID: allQuestion[i].queID, userID: body.userID },
+          raw: true,
+        });
+
+        allQuestion[i].isBookMarked = bookmarked == 1 ? true : false;
+
+        let liked = await QuestionLikeModel.count({
+          where: { queID: allQuestion[i].queID, userID: body.userID },
+          raw: true,
+        });
+
+        allQuestion[i].isLiked = liked == 1 ? true : false;
+
+        let unliked = await QuestionUnlikeModel.count({
+          where: { queID: allQuestion[i].queID, userID: body.userID },
+          raw: true,
+        });
+
+        allQuestion[i].isUnliked = unliked == 1 ? true : false;
+
+        allQuestion[i].queTotalAnswerCount = await QuestionsAnswerModel.count({
+          where: { queID: allQuestion[i].queID },
+          raw: true,
+        });
+
+        allQuestion[i].queTotalLikeCount = await QuestionLikeModel.count({
+          where: { queID: allQuestion[i].queID },
+          raw: true,
+        });
+
+        allQuestion[i].queTotalDislikeCount = await QuestionUnlikeModel.count({
+          where: { queID: allQuestion[i].queID },
+          raw: true,
+        });
+
+        allQuestion[i].queTotalBookmarkCount =
+          await QuestionsBookmarkModel.count({
+            where: { queID: allQuestion[i].queID },
+            raw: true,
+          });
+
+        allQuestion[i].queTotalCommentCount = await QuestionsCommentModel.count(
+          {
+            where: { queID: allQuestion[i].queID },
+            raw: true,
+          }
+        );
+
+        let user = await UsersModal.findOne({
+          where: { userID: allQuestion[i].userID },
+          attributes: ["userFirstName", "userLastName", "userProfilePicture"],
+          raw: true,
+        });
+
+        user.userProfilePicture =
+          config.upload_folder +
+          config.upload_entities.user_profile_image_folder +
+          user.userProfilePicture;
+        allQuestion[i].user = user;
+
+        allQuestion[i].comments = await QuestionsCommentModel.findAll({
+          where: { queID: allQuestion[i].queID },
+          raw: true,
+        });
+
+        for (let i = 0; i < allQuestion[i].comments.length; i++) {
+          allQuestion[i].comments[i].user = await UsersModal.findOne({
+            where: { userID: allQuestion[i].comments[i].userID },
+            attributes: ["userFirstName", "userLastName", "userProfilePicture"],
+            raw: true,
+          });
+
+          // Comment Like count will be done here
+          allQuestion[i].comments[j].commentsLikeCount =
+            await QuestionsCommentLikeModel.count({
+              where: { queCommentID: allQuestion[i].comments[j]?.queCommentID },
+              raw: true,
+            });
+
+          // Comment Dislikes count will be done here
+          allQuestion[i].comments[j].commentsUnlikeCount =
+            await QuestionsCommentUnlikeModel.count({
+              where: { queCommentID: allQuestion[i].comments[j]?.queCommentID },
+              raw: true,
+            });
+        }
+
+        allQuestion[i].answer = await QuestionsAnswerModal.findAll({
+          where: { queID: allQuestion[i].queID },
+          raw: true,
+        });
+
+        for (let j = 0; j < allQuestion[i].answer?.length; j++) {
+          allQuestion[i].answer[j].user = await UsersModal.findOne({
+            where: { userID: allQuestion[i].answer[j]?.userID },
+            attributes: ["userFirstName", "userLastName", "userProfilePicture"],
+            raw: true,
+          });
+
+          try {
+            allQuestion[i].answer[j].answersreply =
+              await QuestionsAnswersReplyModal.findOne({
+                where: { answerID: allQuestion[i].answer[j]?.answerID },
+                raw: true,
+              });
+
+            for (
+              let k = 0;
+              k < allQuestion[i].answer[j]?.answersreply?.length;
+              j++
+            ) {
+              allQuestion[i].answer[j].answersreply[k].user =
+                await UsersModal.findOne({
+                  where: {
+                    userID: allQuestion[i].answer[j].answersreply[k]?.userID,
+                  },
+                  attributes: [
+                    "userFirstName",
+                    "userLastName",
+                    "userProfilePicture",
+                  ],
+                  raw: true,
+                });
+            }
+          } catch (err) {
+            console.log(err);
+          }
+        }
+      }
+      let allQuestionCount = await QuestionModel.count({
+        order: [["queID", "DESC"]],
+        raw: true,
+      });
+      let _result = { total_count: 0 };
+      _result.slides = allQuestion;
+      _result.total_count = allQuestionCount;
+      return _result;
     }
-    let allQuestionCount = await QuestionModel.count({
-      order: [["queID", "DESC"]],
-      raw: true,
-    });
-    let _result = { total_count: 0 };
-    _result.slides = allQuestion;
-    _result.total_count = allQuestionCount;
-    return _result;
+  } catch (err) {
+    console.log(err);
   }
 };
 
@@ -478,20 +513,20 @@ let QuestionLike = async (req) => {
     raw: true,
   });
 
-  if(questionAlreadyLiked) {
+  if (questionAlreadyLiked) {
     return { liked: true };
   } else {
     let questionLikeData = {
       queID: body.queID,
       userID: body.userID,
     };
-  
+
     await QuestionLikeModel.create(questionLikeData);
     await QuestionModel.update(
       { queLikeCount: Number(question?.queLikeCount) + 1 },
       { where: { queID: body.queID, userID: body.userID } }
     );
-  
+
     return { liked: true };
   }
 };
@@ -529,20 +564,20 @@ let QuestionUnlike = async (req) => {
     raw: true,
   });
 
-  if(questionAlreadyUnlike) {
+  if (questionAlreadyUnlike) {
     return { unliked: true };
   } else {
     let questionUnlikeData = {
       queID: body.queID,
       userID: body.userID,
     };
-  
+
     await QuestionUnlikeModel.create(questionUnlikeData);
     await QuestionModel.update(
       { queDislikeCount: Number(question?.queDislikeCount) + 1 },
       { where: { queID: body.queID, userID: body.userID } }
     );
-  
+
     return { unliked: true };
   }
 };
@@ -588,7 +623,7 @@ let MyQuestionList = async (body) => {
   let page = body.page || 1;
   let offset = (page - 1) * limit;
   let findData = { queStatus: "Active", userID: body.userID };
-  
+
   if (body.filters) {
     if (body.filters.searchtext) {
       findData["$and"] = [
@@ -618,42 +653,42 @@ let MyQuestionList = async (body) => {
       }
 
       if (allQuestion[i].queType == "Post") {
-        
         let queImages = await QuestionImagesModel.findAll({
-          where : { queID : allQuestion[i].id, userID : allQuestion[i].userID }
-        })
+          where: { queID: allQuestion[i].id, userID: allQuestion[i].userID },
+        });
 
-        let img = []
-        for(let i = 0; i < queImages.length; i++ ) {
-          img.push(config.upload_folder +
-          config.upload_entities.post_image_folder +
-          allQuestion[i].queImages);
+        let img = [];
+        for (let i = 0; i < queImages.length; i++) {
+          img.push(
+            config.upload_folder +
+              config.upload_entities.post_image_folder +
+              allQuestion[i].queImages
+          );
         }
         allQuestion[i].queImages = img;
-
       }
-      
+
       let bookmarked = await QuestionsBookmarkModel.count({
         where: { queID: allQuestion[i].queID, userID: body.userID },
         raw: true,
       });
 
-      allQuestion[i].isBookMarked = bookmarked == 1 ? true : false
+      allQuestion[i].isBookMarked = bookmarked == 1 ? true : false;
 
       let liked = await QuestionLikeModel.count({
         where: { queID: allQuestion[i].queID, userID: body.userID },
         raw: true,
       });
 
-      allQuestion[i].isLiked = liked == 1 ? true : false
+      allQuestion[i].isLiked = liked == 1 ? true : false;
 
       let unliked = await QuestionUnlikeModel.count({
         where: { queID: allQuestion[i].queID, userID: body.userID },
         raw: true,
       });
-      
-      allQuestion[i].isUnliked = unliked == 1 ? true : false
-      
+
+      allQuestion[i].isUnliked = unliked == 1 ? true : false;
+
       allQuestion[i].queTotalAnswerCount = await QuestionsAnswerModel.count({
         where: { queID: allQuestion[i].queID },
         raw: true,
@@ -683,37 +718,41 @@ let MyQuestionList = async (body) => {
 
       let user = await UsersModal.findOne({
         where: { userID: allQuestion[i].userID },
-        attributes : ['userFirstName','userLastName','userProfilePicture'],
+        attributes: ["userFirstName", "userLastName", "userProfilePicture"],
         raw: true,
       });
 
-      user.userProfilePicture = config.upload_folder + config.upload_entities.user_profile_image_folder + user.userProfilePicture;
-      allQuestion[i].user = user
+      user.userProfilePicture =
+        config.upload_folder +
+        config.upload_entities.user_profile_image_folder +
+        user.userProfilePicture;
+      allQuestion[i].user = user;
 
       allQuestion[i].comments = await QuestionsCommentModel.findAll({
         where: { queID: allQuestion[i].queID },
         raw: true,
       });
 
-      for(let i = 0; i < allQuestion[i].comments.length; i++) {
+      for (let i = 0; i < allQuestion[i].comments.length; i++) {
         allQuestion[i].comments[i].user = await UsersModal.findOne({
           where: { userID: allQuestion[i].comments[i].userID },
-          attributes : ['userFirstName','userLastName','userProfilePicture'],
+          attributes: ["userFirstName", "userLastName", "userProfilePicture"],
           raw: true,
         });
 
         // Comment Like count will be done here
-        allQuestion[i].comments[j].commentsLikeCount = await QuestionsCommentLikeModel.count({
-          where: { queCommentID: allQuestion[i].comments[j]?.queCommentID },
-          raw: true,
-        })
+        allQuestion[i].comments[j].commentsLikeCount =
+          await QuestionsCommentLikeModel.count({
+            where: { queCommentID: allQuestion[i].comments[j]?.queCommentID },
+            raw: true,
+          });
 
         // Comment Dislikes count will be done here
-        allQuestion[i].comments[j].commentsUnlikeCount = await QuestionsCommentUnlikeModel.count({
-          where: { queCommentID: allQuestion[i].comments[j]?.queCommentID },
-          raw: true,
-        })
-
+        allQuestion[i].comments[j].commentsUnlikeCount =
+          await QuestionsCommentUnlikeModel.count({
+            where: { queCommentID: allQuestion[i].comments[j]?.queCommentID },
+            raw: true,
+          });
       }
 
       allQuestion[i].answer = await QuestionsAnswerModal.findAll({
@@ -721,41 +760,49 @@ let MyQuestionList = async (body) => {
         raw: true,
       });
 
-      for(let j = 0; j < allQuestion[i].answer?.length; j++) {
+      for (let j = 0; j < allQuestion[i].answer?.length; j++) {
         allQuestion[i].answer[j].user = await UsersModal.findOne({
           where: { userID: allQuestion[i].answer[j]?.userID },
-          attributes : ['userFirstName','userLastName','userProfilePicture'],
+          attributes: ["userFirstName", "userLastName", "userProfilePicture"],
           raw: true,
         });
 
         try {
-          
-          allQuestion[i].answer[j].answersreply = await QuestionsAnswersReplyModal.findOne({
-            where: { answerID: allQuestion[i].answer[j]?.answerID },
-            raw: true,
-          });
-  
-          for(let k = 0; k < allQuestion[i].answer[j]?.answersreply?.length; j++) {
-            allQuestion[i].answer[j].answersreply[k].user = await UsersModal.findOne({
-              where: { userID: allQuestion[i].answer[j].answersreply[k]?.userID },
-              attributes : ['userFirstName','userLastName','userProfilePicture'],
+          allQuestion[i].answer[j].answersreply =
+            await QuestionsAnswersReplyModal.findOne({
+              where: { answerID: allQuestion[i].answer[j]?.answerID },
               raw: true,
             });
+
+          for (
+            let k = 0;
+            k < allQuestion[i].answer[j]?.answersreply?.length;
+            j++
+          ) {
+            allQuestion[i].answer[j].answersreply[k].user =
+              await UsersModal.findOne({
+                where: {
+                  userID: allQuestion[i].answer[j].answersreply[k]?.userID,
+                },
+                attributes: [
+                  "userFirstName",
+                  "userLastName",
+                  "userProfilePicture",
+                ],
+                raw: true,
+              });
           }
-
-        } catch(err) {
-          console.log(err)
+        } catch (err) {
+          console.log(err);
         }
-
       }
-
     }
     let allQuestionCount = await QuestionModel.count({
       where: findData,
       order: [["queID", "DESC"]],
       raw: true,
     });
-    
+
     let _result = { total_count: 0 };
     _result.slides = allQuestion;
     _result.total_count = allQuestionCount;
@@ -775,19 +822,19 @@ let MyQuestionList = async (body) => {
       }
 
       if (allQuestion[i].queType == "Post") {
-        
         let queImages = await QuestionImagesModel.findAll({
-          where : { queID : allQuestion[i].queID }
-        })
+          where: { queID: allQuestion[i].queID },
+        });
 
-        let img = []
-        for(let i = 0; i < queImages.length; i++ ) {
-          img.push(config.upload_folder +
-          config.upload_entities.post_image_folder +
-          queImages[i].image);
+        let img = [];
+        for (let i = 0; i < queImages.length; i++) {
+          img.push(
+            config.upload_folder +
+              config.upload_entities.post_image_folder +
+              queImages[i].image
+          );
         }
         allQuestion[i].queImages = img;
-
       }
 
       let bookmarked = await QuestionsBookmarkModel.count({
@@ -795,21 +842,21 @@ let MyQuestionList = async (body) => {
         raw: true,
       });
 
-      allQuestion[i].isBookMarked = bookmarked == 1 ? true : false
+      allQuestion[i].isBookMarked = bookmarked == 1 ? true : false;
 
       let liked = await QuestionLikeModel.count({
         where: { queID: allQuestion[i].queID, userID: body.userID },
         raw: true,
       });
 
-      allQuestion[i].isLiked = liked == 1 ? true : false
+      allQuestion[i].isLiked = liked == 1 ? true : false;
 
       let unliked = await QuestionUnlikeModel.count({
         where: { queID: allQuestion[i].queID, userID: body.userID },
         raw: true,
       });
-      
-      allQuestion[i].isUnliked = unliked == 1 ? true : false
+
+      allQuestion[i].isUnliked = unliked == 1 ? true : false;
 
       allQuestion[i].queTotalAnswerCount = await QuestionsAnswerModel.count({
         where: { queID: allQuestion[i].queID },
@@ -840,37 +887,41 @@ let MyQuestionList = async (body) => {
 
       let user = await UsersModal.findOne({
         where: { userID: allQuestion[i].userID },
-        attributes : ['userFirstName','userLastName','userProfilePicture'],
+        attributes: ["userFirstName", "userLastName", "userProfilePicture"],
         raw: true,
       });
 
-      user.userProfilePicture = config.upload_folder + config.upload_entities.user_profile_image_folder + user.userProfilePicture;
+      user.userProfilePicture =
+        config.upload_folder +
+        config.upload_entities.user_profile_image_folder +
+        user.userProfilePicture;
       allQuestion[i].user = user;
-      
+
       allQuestion[i].comments = await QuestionsCommentModel.findAll({
         where: { queID: allQuestion[i].queID },
         raw: true,
       });
 
-      for(let j = 0; j < allQuestion[i].comments?.length; j++) {
+      for (let j = 0; j < allQuestion[i].comments?.length; j++) {
         allQuestion[i].comments[j].user = await UsersModal.findOne({
           where: { userID: allQuestion[i].comments[j]?.userID },
-          attributes : ['userFirstName','userLastName','userProfilePicture'],
+          attributes: ["userFirstName", "userLastName", "userProfilePicture"],
           raw: true,
         });
 
         // Comment Like count will be done here
-        allQuestion[i].comments[j].commentsLikeCount = await QuestionsCommentLikeModel.count({
-          where: { queCommentID: allQuestion[i].comments[j]?.queCommentID },
-          raw: true,
-        })
+        allQuestion[i].comments[j].commentsLikeCount =
+          await QuestionsCommentLikeModel.count({
+            where: { queCommentID: allQuestion[i].comments[j]?.queCommentID },
+            raw: true,
+          });
 
         // Comment Dislikes count will be done here
-        allQuestion[i].comments[j].commentsUnlikeCount = await QuestionsCommentUnlikeModel.count({
-          where: { queCommentID: allQuestion[i].comments[j]?.queCommentID },
-          raw: true,
-        })
-        
+        allQuestion[i].comments[j].commentsUnlikeCount =
+          await QuestionsCommentUnlikeModel.count({
+            where: { queCommentID: allQuestion[i].comments[j]?.queCommentID },
+            raw: true,
+          });
       }
 
       allQuestion[i].answer = await QuestionsAnswerModal.findAll({
@@ -878,10 +929,10 @@ let MyQuestionList = async (body) => {
         raw: true,
       });
 
-      for(let j = 0; j < allQuestion[i].answer?.length; j++) {
+      for (let j = 0; j < allQuestion[i].answer?.length; j++) {
         allQuestion[i].answer[j].user = await UsersModal.findOne({
           where: { userID: allQuestion[i].answer[j]?.userID },
-          attributes : ['userFirstName','userLastName','userProfilePicture'],
+          attributes: ["userFirstName", "userLastName", "userProfilePicture"],
           raw: true,
         });
 
@@ -892,32 +943,40 @@ let MyQuestionList = async (body) => {
         // }
 
         try {
-          
-          allQuestion[i].answer[j].answersreply = await QuestionsAnswersReplyModal.findOne({
-            where: { answerID: allQuestion[i].answer[j]?.answerID },
-            raw: true,
-          });
-  
-          for(let k = 0; k < allQuestion[i].answer[j]?.answersreply?.length; j++) {
-            allQuestion[i].answer[j].answersreply[k].user = await UsersModal.findOne({
-              where: { userID: allQuestion[i].answer[j].answersreply[k]?.userID },
-              attributes : ['userFirstName','userLastName','userProfilePicture'],
+          allQuestion[i].answer[j].answersreply =
+            await QuestionsAnswersReplyModal.findOne({
+              where: { answerID: allQuestion[i].answer[j]?.answerID },
               raw: true,
             });
+
+          for (
+            let k = 0;
+            k < allQuestion[i].answer[j]?.answersreply?.length;
+            j++
+          ) {
+            allQuestion[i].answer[j].answersreply[k].user =
+              await UsersModal.findOne({
+                where: {
+                  userID: allQuestion[i].answer[j].answersreply[k]?.userID,
+                },
+                attributes: [
+                  "userFirstName",
+                  "userLastName",
+                  "userProfilePicture",
+                ],
+                raw: true,
+              });
           }
-
-        } catch(err) {
-          console.log(err)
+        } catch (err) {
+          console.log(err);
         }
-
       }
-      
     }
     let allQuestionCount = await QuestionModel.count({
       order: [["queID", "DESC"]],
       raw: true,
     });
-    
+
     let _result = { total_count: 0 };
     _result.slides = allQuestion;
     _result.total_count = allQuestionCount;
@@ -1094,16 +1153,16 @@ let QuestionsAnswerLike = async (req) => {
     raw: true,
   });
 
-  if(questionAnswerAlreadyLike) {
+  if (questionAnswerAlreadyLike) {
     return { answerliked: true };
   } else {
     let questionAnswerLikeData = {
       answerID: body.answerID,
       userID: body.userID,
     };
-  
+
     await QuestionsAnswerLikeModel.create(questionAnswerLikeData);
-  
+
     return { answerliked: true };
   }
 };
@@ -1136,22 +1195,21 @@ let QuestionsAnswerUnlike = async (req) => {
     raw: true,
   });
 
-  if(questionAnswerAlreadyUnlike) {
+  if (questionAnswerAlreadyUnlike) {
     return { unliked: true };
   } else {
     let questionAnswerUnlikeData = {
       answerID: body.answerID,
       userID: body.userID,
     };
-  
+
     await QuestionsAnswerUnlikeModel.create(questionAnswerUnlikeData);
-  
+
     return { unliked: true };
   }
 };
 
 let QuestionsCommentLike = async (req) => {
-
   let body = req.body.body ? JSON.parse(req.body.body) : req.body;
   if (helper.undefinedOrNull(body)) {
     throw new BadRequestError("Request body comes empty");
@@ -1179,16 +1237,16 @@ let QuestionsCommentLike = async (req) => {
     raw: true,
   });
 
-  if(questionCommentAlreadyLike) {
+  if (questionCommentAlreadyLike) {
     return { commentliked: true };
   } else {
     let questionCommentLikeData = {
       queCommentID: body.queCommentID,
       userID: body.userID,
     };
-  
+
     await QuestionsCommentLikeModel.create(questionCommentLikeData);
-  
+
     return { commentliked: true };
   }
 };
@@ -1221,16 +1279,16 @@ let QuestionsCommentUnLike = async (req) => {
     raw: true,
   });
 
-  if(questionCommentAlreadyUnlike) {
+  if (questionCommentAlreadyUnlike) {
     return { commentunliked: true };
   } else {
     let questionCommentUnlikeData = {
       queCommentID: body.queCommentID,
       userID: body.userID,
     };
-  
+
     await QuestionsCommentUnlikeModel.create(questionCommentUnlikeData);
-  
+
     return { commentunliked: true };
   }
 };
@@ -1251,16 +1309,19 @@ let QuestionArchive = async (req) => {
     raw: true,
   });
 
-  if(!question) {
-    throw new BadRequestError('You can not archive this question')
+  if (!question) {
+    throw new BadRequestError("You can not archive this question");
   }
 
-  await QuestionModel.update({queStatus : 'Archived'},{
-    where: { queID: body.queID, userID: body.userID },
-    raw: true,
-  });
+  await QuestionModel.update(
+    { queStatus: "Archived" },
+    {
+      where: { queID: body.queID, userID: body.userID },
+      raw: true,
+    }
+  );
 
-  return { archived : true }
+  return { archived: true };
 };
 
 let MyArchivedQuestionsList = async (req) => {
@@ -1275,14 +1336,14 @@ let MyArchivedQuestionsList = async (req) => {
   });
 
   let question = await QuestionModel.findAll({
-    where: { queStatus: 'Archived', userID: body.userID },
+    where: { queStatus: "Archived", userID: body.userID },
     raw: true,
   });
 
-  for(let i = 0; i < question.length; i++) {
+  for (let i = 0; i < question.length; i++) {
     question[i].user = await UsersModal.findOne({
       where: { userID: question[i].userID },
-      attributes : ['userFirstName','userLastName','userProfilePicture'],
+      attributes: ["userFirstName", "userLastName", "userProfilePicture"],
       raw: true,
     });
   }
@@ -1291,7 +1352,7 @@ let MyArchivedQuestionsList = async (req) => {
   //   throw new BadRequestError('You do not have any archived question')
   // }
 
-  return { slides : question }
+  return { slides: question };
 };
 
 let QuestionActivate = async (req) => {
@@ -1310,38 +1371,177 @@ let QuestionActivate = async (req) => {
     raw: true,
   });
 
-  if(!question) {
-    throw new BadRequestError('You can not active this question')
+  if (!question) {
+    throw new BadRequestError("You can not active this question");
   }
 
-  await QuestionModel.update({queStatus : 'Active'},{
-    where: { queID: body.queID, userID: body.userID },
-    raw: true,
-  });
+  await QuestionModel.update(
+    { queStatus: "Active" },
+    {
+      where: { queID: body.queID, userID: body.userID },
+      raw: true,
+    }
+  );
 
-  return { actived : true }
+  return { actived: true };
 };
-
 
 let updateQuestion = async (req) => {
   let body = req.body.body ? JSON.parse(req.body.body) : req.body;
-  [
-    "queQuestion",
-    "queDescription",
-    "vocationID",
-  ].forEach((x) => {
+  ["queQuestion", "queDescription", "vocationID"].forEach((x) => {
     if (!body[x]) {
       throw new BadRequestError(x + " is required");
     }
   });
-  let updatedata ={}
-  let optionalFiled=["queQuestion","queDescription","vocationID"]
-  optionalFiled.forEach(x=>{
-      if(body[x]){
-        updatedata[x]=body[x]
+  let updatedata = {};
+  let optionalFiled = ["queQuestion", "queDescription", "vocationID"];
+  optionalFiled.forEach((x) => {
+    if (body[x]) {
+      updatedata[x] = body[x];
+    }
+  });
+  await QuestionModel.update(updatedata, {
+    where: { queID: body.queID },
+    raw: true,
+  });
+};
+
+let getVoilatedQuestion = async (req) => {
+  try {
+    let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+    let limit = body.limit ? parseInt(body.limit) : 10;
+    let page = body.page || 1;
+    let offset = (page - 1) * limit;
+    let findData = { queStatus: "Voilated" };
+
+    if (body.page || body.limit) {
+      let allQuestion = await QuestionModel.findAll({
+        where: findData,
+        limit,
+        offset,
+        order: [["queID", "DESC"]],
+        raw: true,
+      });
+
+      for (let i = 0; i < allQuestion.length; i++) {
+        // allQuestion[i].user = await
+        // run raw query to get user first name and last name with industry name
+        let user = await sequelize_mysql.query(
+          `SELECT userFirstName, userLastName,  industryName FROM users INNER JOIN
+           industry ON users.industryID = industry.industryID WHERE userID = ${allQuestion[i].userID}`,
+          {
+            type: sequelize.QueryTypes.SELECT,
+            raw: true,
+          }
+        );
+
+        allQuestion[i].user = user[0];
       }
-  })
-  await QuestionModel.update(updatedata,{where:{queID:body.queID},raw:true})
+
+      let _result = { total_count: 0 };
+      _result.slides = allQuestion;
+      _result.total_count = allQuestion.length;
+      return _result;
+    } else {
+      let allQuestion = await QuestionModel.findAll({
+        where: findData,
+        order: [["queID", "DESC"]],
+        raw: true,
+      });
+
+      for (let i = 0; i < allQuestion.length; i++) {
+        let user = await sequelize_mysql.query(
+          `SELECT userFirstName, userLastName,  industryName FROM users INNER JOIN
+           industry ON users.industryID = industry.industryID WHERE userID = ${allQuestion[i].userID}`,
+          {
+            type: sequelize.QueryTypes.SELECT,
+            raw: true,
+          }
+        );
+
+        allQuestion[i].user = user[0];
+      }
+      let _result = { total_count: 0 };
+      _result.slides = allQuestion;
+      _result.total_count = allQuestion.length;
+      return _result;
+    }
+  } catch (err) {
+    throw new BadRequestError(err.message);
+  }
+};
+
+let approveAndRejectQuestion = async (req) => {
+  let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+  if (helper.undefinedOrNull(body)) {
+    throw new BadRequestError("Request body comes empty");
+  }
+  ["queID", "queStatus"].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
+  });
+
+  if (body.queID.length > 1) {
+    // update multiple question
+    await QuestionModel.update(
+      { queStatus: body.queStatus },
+      {
+        where: { queID: body.queID },
+        raw: true,
+      }
+    );
+  } else {
+    let question = await QuestionModel.findOne({
+      where: { queID: body.queID },
+      raw: true,
+    });
+
+    if (!question) {
+      throw new BadRequestError("You can not active this question");
+    }
+
+    await QuestionModel.update(
+      { queStatus: body.queStatus },
+      {
+        where: { queID: body.queID },
+        raw: true,
+      }
+    );
+  }
+
+  return { updated: true };
+};
+
+let aaproveAndRejectQuestionList = async (req) => {
+  let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+  if (helper.undefinedOrNull(body)) {
+    throw new BadRequestError("Request body comes empty");
+  }
+  ["queID", "queStatus"].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
+  });
+
+  let question = await QuestionModel.findAll({
+    where: { queID: body.queID },
+    raw: true,
+  });
+
+  if (!question) {
+    throw new BadRequestError("You can not active this question");
+  }
+
+  await QuestionModel.update(
+    { queStatus: body.queStatus },
+    {
+      where: { queID: body.queID },
+      raw: true,
+    }
+  );
+
+  return { updated: true };
 };
 
 module.exports = {
@@ -1359,8 +1559,10 @@ module.exports = {
   QuestionsAnswerUnlike: QuestionsAnswerUnlike,
   QuestionsCommentLike: QuestionsCommentLike,
   QuestionsCommentUnLike: QuestionsCommentUnLike,
-  QuestionArchive:QuestionArchive,
-  MyArchivedQuestionsList:MyArchivedQuestionsList,
-  QuestionActivate:QuestionActivate,
-  updateQuestion:updateQuestion
+  QuestionArchive: QuestionArchive,
+  MyArchivedQuestionsList: MyArchivedQuestionsList,
+  QuestionActivate: QuestionActivate,
+  updateQuestion: updateQuestion,
+  getVoilatedQuestion: getVoilatedQuestion,
+  approveAndRejectQuestion: approveAndRejectQuestion,
 };
