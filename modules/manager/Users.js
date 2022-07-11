@@ -59,6 +59,21 @@ let Login = async (body) => {
       config.upload_folder +
       config.upload_entities.user_profile_image_folder +
       user.userProfilePicture;
+
+    if (user.userType == "HR") {
+      let company = await CompanyModal.findOne({
+        where: { companyID: user.userCompanyId },
+        raw: true,
+      });
+      if (company) {
+        user.companyName = company.companyName;
+        user.companyLogo =
+          config.upload_folder +
+          config.upload_entities.compnay_image_folder +
+          company.companyLogo;
+      }
+    }
+
     return user;
   } else {
     throw new BadRequestError("Ask admin for permission");

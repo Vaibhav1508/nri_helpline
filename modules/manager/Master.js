@@ -95,6 +95,7 @@ let CountryUpdate = async (req) => {
     let optionalFiled = [
       "countryID",
       "countryName",
+      "countryCode",
       "countryRemarks",
       "countryStatus",
       "countryShortName",
@@ -137,7 +138,7 @@ let CountryList = async (req) => {
     let limit = req.body.limit ? parseInt(req.body.limit) : 10;
     let page = req.body.page || 1;
     let offset = (page - 1) * limit;
-    let findData = { countryStatus: "Active" };
+    let findData = {};
 
     if (req.body.filters) {
       if (req.body.filters.searchtext) {
@@ -328,7 +329,7 @@ const stateList = async (req) => {
     let limit = req.body.limit ? parseInt(req.body.limit) : 10;
     let page = req.body.page || 1;
     let offset = (page - 1) * limit;
-    let findData = { stateStatus: "Active" };
+    let findData = {};
     if (req.body.filters) {
       if (req.body.filters.searchtext) {
         findData["$and"] = [
@@ -535,7 +536,7 @@ const cityList = async (req) => {
   let limit = req.body.limit ? parseInt(req.body.limit) : 10;
   let page = req.body.page || 1;
   let offset = (page - 1) * limit;
-  let findData = { cityStatus: "Active" };
+  let findData = {};
   if (req.body.filters) {
     if (req.body.filters.searchtext) {
       findData["$and"] = [
