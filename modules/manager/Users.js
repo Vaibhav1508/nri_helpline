@@ -610,6 +610,37 @@ const followUser = async (req) => {
 const userVocationFollowList = async (req) => {
   const { userID } = req.params;
 
+  if(!userID) {
+    throw new BadRequestError('User id is required')
+  }
+
+  let vocations = await VocationModal.findAll({
+    raw : true
+  })
+
+  let subVocation = await SubVoctionModel.findAll({
+    raw : true
+  })
+
+  for(let i = 0; i < vocations.length; i++) {
+    let userFollowedVocation = await UserVoctionModel.findOne({
+      where : {userId : userID, vocationID : vocations[i].vocationID, uservocationStatus: 'Following'}
+    })
+
+    if(userFollowedVocation) {
+      vocations[i].userFollowing = true
+    }
+  }
+
+  for(let i = 0; i < subVocation.length; i++) {
+    let userFollowedSubVocation = await UserVoctionModel.findOne({
+      where : {userId : userID, vocationID : subVocation[i].vocationID, uservocationStatus: 'Following'}
+    })
+
+    if(userFollowedVocation) {
+      vocations[i].userFollowing = true
+    }
+  }
   // by userid and uservocationStatus is following
   let userVocationFollowList = await UservocationModel.findAll({
     where: {

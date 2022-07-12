@@ -28,7 +28,7 @@ router.post("/questionsanswerunlike", controller.QuestionsAnswerUnlike);
 router.post("/questionarchive", controller.QuestionArchive);
 router.post("/questionactivate", controller.QuestionActivate);
 router.post("/myarchivedquestion", controller.MyArchivedQuestionsList);
-
+router.post("/viewallquestionslist",controller.ViewAllMyQuestionList);
 router.post("/voilatedquestionslist", controller.getVoilatedQuestions);
 router.post("/approveandrejectquestion", controller.approveAndRejectQuestion);
 

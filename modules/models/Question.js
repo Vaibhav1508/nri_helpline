@@ -32,6 +32,11 @@ const QuestionModal = sequelize_mysql.define(
       values: ["Active", "Inactive", "Archived", "Voilated"],
       defaultValue: "Active",
     },
+    vocType: {
+      type: Sequelize.ENUM,
+      values: ['vocation', 'subvocation'],
+      defaultValue : 'vocation'
+    },
     queAnswerCount: {
       type: Sequelize.NUMBER,
       defaultValue: 0,

@@ -1219,6 +1219,19 @@ const approveAndRejectQuestion = (req, res, next) => {
     .catch(next);
 };
 
+let ViewAllMyQuestionList = (req, res, next) => {
+  return questionManager
+      .ViewAllMyQuestionList(req.body)
+      .then(data => {
+          let result = {
+              status:200,
+              data: data
+          }
+          return res.json(result);
+      })
+      .catch(next);
+}
+
 module.exports = {
   CreateQuestion: CreateQuestion,
   QuestionList: QuestionList,
@@ -1240,4 +1253,5 @@ module.exports = {
   updateQuestion: updateQuestion,
   getVoilatedQuestions: getVoilatedQuestions,
   approveAndRejectQuestion: approveAndRejectQuestion,
+  ViewAllMyQuestionList:ViewAllMyQuestionList
 };
