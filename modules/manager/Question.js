@@ -24,6 +24,8 @@ const QuestionsAnswerModal = require("../models/QuestionsAnswer");
 const sequelize_mysql = require("../helpers/sequelize-mysql");
 const sequelize = require("sequelize");
 const { voilatedKeywords } = require("../helpers/voilatedKeywords");
+const UservocationModel = require("../models/User_vocations");
+const UserSubVocationModel = require("../models/User_subvocations");
 
 let generateAuthToken = async (phone) => {
   return uuidv4();
@@ -151,7 +153,7 @@ let QuestionList = async (body) => {
       }
     }
     if (body.page || body.limit) {
-      let allQuestion = await QuestionModel.findAll({
+      let allQuestionList = await QuestionModel.findAll({
         where: findData,
         limit,
         offset,
@@ -159,14 +161,30 @@ let QuestionList = async (body) => {
         raw: true,
       });
 
-      for (let i = 0; i < allQuestion.length; i++) {
-        if (allQuestion[i].queType == "Post") {
-          allQuestion[i].queQuestion =
-            config.upload_folder +
-            config.upload_entities.post_image_folder +
-            allQuestion[i].queQuestion;
+      let allQuestion = [];
+      for (let i = 0; i < allQuestionList.length; i++) {
+
+        if(allQuestionList[i].vocType == 'vocation') {
+          let userFollowedVocation = await UservocationModel.findAll({
+            where : {vocationID : allQuestionList[i].vocationID, uservocationStatus: 'Following'} 
+          })
+          if(userFollowedVocation) {
+            allQuestion.push(allQuestionList[i])
+          }
         }
 
+        if(allQuestionList[i].vocType == 'subvocation') {
+          let userFollowedSubVocation = await UserSubVocationModel.findAll({
+            where : {subvocationID : allQuestionList[i].vocationID, usersubvocationStatus: 'Following'} 
+          })
+          if(userFollowedSubVocation) {
+            allQuestion.push(allQuestionList[i])
+          }
+        }
+      }
+
+      for (let i = 0; i < allQuestion.length; i++) {
+        
         if (allQuestion[i].queType == "Post") {
           let queImages = await QuestionImagesModel.findAll({
             where: { queID: allQuestion[i].queID },
@@ -317,19 +335,36 @@ let QuestionList = async (body) => {
       _result.total_count = allQuestionCount;
       return _result;
     } else {
-      let allQuestion = await QuestionModel.findAll({
+      let allQuestionList = await QuestionModel.findAll({
         where: findData,
         order: [["queID", "DESC"]],
         raw: true,
       });
-      for (let i = 0; i < allQuestion.length; i++) {
-        if (allQuestion[i].queType == "Post") {
-          allQuestion[i].queQuestion =
-            config.upload_folder +
-            config.upload_entities.post_image_folder +
-            allQuestion[i].queQuestion;
+
+      let allQuestion = [];
+      for (let i = 0; i < allQuestionList.length; i++) {
+        
+        if(allQuestionList[i].vocType == 'vocation') {
+          let userFollowedVocation = await UservocationModel.findAll({
+            where : {vocationID : allQuestionList[i].vocationID, uservocationStatus: 'Following'} 
+          })
+          if(userFollowedVocation) {
+            allQuestion.push(allQuestionList[i])
+          }
         }
 
+        if(allQuestionList[i].vocType == 'subvocation') {
+          let userFollowedSubVocation = await UserSubVocationModel.findAll({
+            where : {subvocationID : allQuestionList[i].vocationID, usersubvocationStatus: 'Following'} 
+          })
+          if(userFollowedSubVocation) {
+            allQuestion.push(allQuestionList[i])
+          }
+        }
+      }
+
+      for (let i = 0; i < allQuestion.length; i++) {
+        
         if (allQuestion[i].queType == "Post") {
           let queImages = await QuestionImagesModel.findAll({
             where: { queID: allQuestion[i].queID },
@@ -654,13 +689,8 @@ let MyQuestionList = async (body) => {
       order: [["queID", "DESC"]],
       raw: true,
     });
+
     for (let i = 0; i < allQuestion.length; i++) {
-      if (allQuestion[i].queType == "Post") {
-        allQuestion[i].queQuestion =
-          config.upload_folder +
-          config.upload_entities.post_image_folder +
-          allQuestion[i].queQuestion;
-      }
 
       if (allQuestion[i].queType == "Post") {
         let queImages = await QuestionImagesModel.findAll({
@@ -823,13 +853,8 @@ let MyQuestionList = async (body) => {
       order: [["queID", "DESC"]],
       raw: true,
     });
+
     for (let i = 0; i < allQuestion.length; i++) {
-      if (allQuestion[i].queType == "Post") {
-        allQuestion[i].queQuestion =
-          config.upload_folder +
-          config.upload_entities.post_image_folder +
-          allQuestion[i].queQuestion;
-      }
 
       if (allQuestion[i].queType == "Post") {
         let queImages = await QuestionImagesModel.findAll({
