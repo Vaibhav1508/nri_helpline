@@ -549,9 +549,23 @@ let RejectHr = async (req) => {
     raw: true,
   });
 
+  if (body.type == "GST" && body.status == "Rejected") {
+    user.isGstVerified = "Rejected";
+  }
+
+  if (body.type == "PAN" && body.status == "Rejected") {
+    user.isPanVerified = "Rejected";
+  }
+
+  if (body.type === "both" && body.status === "Rejected") {
+    user.isGstVerified = "Rejected";
+    user.isPanVerified = "Rejected";
+  }
+
   // update user details
   await UsersModel.update(
     {
+      ...user,
       userDocumentVerified: "No",
       userDocumentRejectionReason: body.reason,
     },
@@ -597,13 +611,9 @@ const approveRejectSingleDocument = async (req) => {
 
     if (body.type == "GST" && body.status == "Approved") {
       user.isGstVerified = "Approved";
-    } else if (body.type == "GST" && body.status == "Rejected") {
-      user.isGstVerified = "Rejected";
     }
     if (body.type == "PAN" && body.status == "Approved") {
       user.isPanVerified = "Approved";
-    } else if (body.type == "PAN" && body.status == "Rejected") {
-      user.isPanVerified = "Rejected";
     }
 
     await UsersModel.update(user, {
