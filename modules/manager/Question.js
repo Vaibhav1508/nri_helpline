@@ -1686,6 +1686,18 @@ let ViewAllMyQuestionList = async (body) => {
       user.userProfilePicture = config.upload_folder + config.upload_entities.user_profile_image_folder + user.userProfilePicture;
       allQuestion[i].user = user
 
+      let isFollowed = await userFollowModal.findOne({
+        where : {userfollowUserID : allQuestion[i].userID, userID: body.userID},
+        raw : true
+      })
+
+      if(isFollowed) {
+        allQuestion[i].isFollow = true
+      }
+      if(!isFollowed) {
+        allQuestion[i].isFollow = false
+      }
+
       allQuestion[i].comments = await QuestionsCommentModel.findAll({
         where: { queID: allQuestion[i].queID },
         raw: true,
@@ -1839,6 +1851,18 @@ let ViewAllMyQuestionList = async (body) => {
 
       user.userProfilePicture = config.upload_folder + config.upload_entities.user_profile_image_folder + user.userProfilePicture;
       allQuestion[i].user = user
+
+      let isFollowed = await userFollowModal.findOne({
+        where : {userfollowUserID : allQuestion[i].userID, userID: body.userID},
+        raw : true
+      })
+
+      if(isFollowed) {
+        allQuestion[i].isFollow = true
+      }
+      if(!isFollowed) {
+        allQuestion[i].isFollow = false
+      }
 
       allQuestion[i].comments = await QuestionsCommentModel.findAll({
         where: { queID: allQuestion[i].queID },
