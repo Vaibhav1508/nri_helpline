@@ -67,10 +67,11 @@ let Login = async (body) => {
       });
       if (company) {
         user.companyName = company.companyName;
-        user.companyLogo =
-          config.upload_folder +
-          config.upload_entities.compnay_image_folder +
-          company.companyLogo;
+        user.companyLogo = company.companyLogo
+          ? config.upload_folder +
+            config.upload_entities.compnay_image_folder +
+            company.companyLogo
+          : null;
       }
     }
 
