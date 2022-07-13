@@ -616,144 +616,241 @@ const userVocationFollowList = async (req) => {
   }
 
   let vocations = await VocationModal.findAll({
+    where : {vocationStatus : 'Active'},
     raw : true
   })
 
   let subVocation = await SubVoctionModel.findAll({
+    where : {subVocationStatus : 'Active'},
     raw : true
   })
 
   for(let i = 0; i < vocations.length; i++) {
     let userFollowedVocation = await UserVoctionModel.findOne({
-      where : {userId : userID, vocationID : vocations[i].vocationID, uservocationStatus: 'Following'}
+      where : {userID : userID, vocationID : vocations[i].vocationID, uservocationStatus: 'Following'}
     })
 
     if(userFollowedVocation) {
       vocations[i].userFollowing = true
+    } else {
+      vocations[i].userFollowing = false
     }
   }
 
   for(let i = 0; i < subVocation.length; i++) {
-    let userFollowedSubVocation = await UserVoctionModel.findOne({
-      where : {userId : userID, vocationID : subVocation[i].vocationID, uservocationStatus: 'Following'}
+    let userFollowedSubVocation = await UserSubVocationModel.findOne({
+      where : {userID : userID, subvocationID : subVocation[i].subVocationID, usersubvocationStatus: 'Following'}
     })
 
-    if(userFollowedVocation) {
-      vocations[i].userFollowing = true
+    if(userFollowedSubVocation) {
+      subVocation[i].userFollowing = true
+    } else {
+      subVocation[i].userFollowing = false
     }
   }
-  // by userid and uservocationStatus is following
-  let userVocationFollowList = await UservocationModel.findAll({
-    where: {
-      [Op.and]: [{ userID }, { uservocationStatus: "Following" }],
-    },
-    raw: true,
-  });
 
-  // Get followed  SubVocation list
-  let subVocationList = await SubVocationModel.findAll({
-    where: {
-      vocationID: userVocationFollowList.map((x) => x.vocationID),
-    },
-    raw: true,
-  });
-
-  let vocationList = await VocationModal.findAll({
-    where: {},
-    raw: true,
-  });
-
-  // with userVocation id
-  const vocationListFollow = vocationList.map((x) => {
-    let userVocation = userVocationFollowList.find(
-      (y) => y.vocationID === x.vocationID
-    );
-    if (userVocation) {
-      x.isFollow = true;
-    } else {
-      x.isFollow = false;
-    }
-    return {
-      ...x,
-      ...userVocation,
-    };
-  });
-
-  // sort by followed vocation
-  vocationListFollow.sort((a, b) => {
-    if (a.isFollow && !b.isFollow) {
-      return -1;
-    } else if (!a.isFollow && b.isFollow) {
-      return 1;
-    } else {
-      return 0;
-    }
-  });
-
-  return {
-    vocationListFollow,
-  };
+  let slides = {}
+  slides.vocation = vocations
+  slides.subVocations = subVocation
+  return slides;
 };
 
 const unFollowVocation = async (req) => {
   const body = req.body.body ? JSON.parse(req.body.body) : req.body;
-  ["userID", "uservocationID"].forEach((x) => {
+  ["userID", "uservocationID","vocType"].forEach((x) => {
     if (!body[x]) {
       throw new BadRequestError(x + " is required");
     }
   });
 
-  // change status to Unfollowed
-  await UservocationModel.update(
-    { uservocationStatus: "Unfollowed" },
-    { where: { userID: body.userID, uservocationID: body.uservocationID } }
-  );
+  if(body.vocType == 'vocation') {
 
-  return {
-    message: "unfollowed",
-  };
+    // find record exist or not
+    let alreadyExist = await UservocationModel.findOne({
+      where: { userID: body.userID, vocationID : body.uservocationID },
+      raw : true
+    });
+
+    if(alreadyExist) {
+      // change status to Unfollowed
+      await UservocationModel.update(
+        { uservocationStatus: "Unfollowed" },
+        { where: { userID: body.userID, vocationID: body.uservocationID } }
+      );
+
+      return {
+        message: "You are now unfollowing this vocation",
+      };
+    }
+
+    if(!alreadyExist) {
+      // change status to Unfollowed
+
+      try {
+        await UservocationModel.create(
+          { userID: body.userID,
+            vocationID: body.uservocationID,
+            uservocationStatus: "Unfollowed" 
+          });
+  
+        return {
+          message: "You are now unfollowing this vocation",
+        };
+      } catch(err) {
+        console.log(err)
+      }
+    }
+  }
+
+  if(body.vocType == 'subvocation') {
+
+    // find record exist or not
+    let alreadyExist = await UserSubVocationModel.findOne({
+      where: { userID: body.userID, subvocationID : body.uservocationID },
+      raw : true
+    });
+
+    if(alreadyExist) {
+      // change status to Unfollowed
+      await UserSubVocationModel.update(
+        { usersubvocationStatus: "Unfollowed" },
+        { where: { userID: body.userID, subvocationID: body.uservocationID } }
+      );
+
+      return {
+        message: "You are now unfollowing this vocation",
+      };
+    }
+
+    if(!alreadyExist) {
+
+      try {
+        let subVocation = await SubVocationModel.findOne({
+          where: { subVocationID: body.uservocationID },
+          raw : true
+        })
+
+        // change status to Unfollowed
+      await UserSubVocationModel.create(
+        { userID: body.userID,
+          subvocationID: body.vocationID,
+          uservocationStatus: "Unfollowed",
+          vocationID : subVocation.vocationID
+        });
+
+      return {
+        message: "You are now unfollowing this vocation",
+      };
+      } catch(err) {
+        console.log(err)
+      }
+    }
+  }
 };
 
 const followVocation = async (req) => {
   const body = req.body.body ? JSON.parse(req.body.body) : req.body;
-  ["userID", "vocationID"].forEach((x) => {
+  ["userID", "vocationID","vocType"].forEach((x) => {
     if (!body[x]) {
       throw new BadRequestError(x + " is required");
     }
   });
 
-  // check if user already follow this vocation
-  let userVocation = await UservocationModel.findOne({
-    where: {
-      [Op.and]: [{ userID: body.userID }, { vocationID: body.vocationID }],
-    },
+  // check if user already following five vocations
+  let userFollowingVocationCount = await UservocationModel.count({
+    where: { userID: body.userID, uservocationStatus: 'Following' },
     raw: true,
   });
 
-  if (userVocation) {
-    // if user already follow this vocation
-    // change status to Following
-    await UservocationModel.update(
-      { uservocationStatus: "Following" },
-      { where: { userID: body.userID, vocationID: body.vocationID } }
-    );
+  let userFollowingSubVocationCount = await UserSubVocationModel.count({
+    where: { userID: body.userID, usersubvocationStatus: 'Following' },
+    raw: true,
+  });
 
-    return {
-      message: "followed",
-    };
+  let totalFollowingCount = userFollowingVocationCount + userFollowingSubVocationCount;
+  // return if user is following more then 5 vocation
+  if(totalFollowingCount > 4) {
+    return {message : 'You can only follow upto 5 vocations'}
   }
 
-  if (!userVocation) {
-    await UservocationModel.create({
-      userID: body.userID,
-      vocationID: body.vocationID,
-      uservocationStatus: "Following",
+  if(body.vocType == 'vocation') {
+    // check if user already follow this vocation
+    let userVocation = await UservocationModel.findOne({
+      where: { userID: body.userID, vocationID: body.vocationID },
+      raw: true,
     });
 
-    return {
-      message: "followed",
-    };
+    if (userVocation) {
+      // if user already follow this vocation
+      // change status to Following
+      await UservocationModel.update(
+        { uservocationStatus: "Following" },
+        { where: { userID: body.userID, vocationID: body.vocationID } }
+      );
+
+      return {
+        message: "You are now following this vocation",
+      };
+    }
+
+    if (!userVocation) {
+      await UservocationModel.create({
+        userID: body.userID,
+        vocationID: body.vocationID,
+        uservocationStatus: "Following",
+      });
+
+      return {
+        message: "You are now following this vocation",
+      };
+    }
   }
+
+  if(body.vocType == 'subvocation') {
+    // check if user already follow this vocation
+    let userSubVocation = await UserSubVocationModel.findOne({
+      where: { userID: body.userID, subvocationID: body.vocationID },
+      raw: true,
+    });
+
+    if (userSubVocation) {
+      // if user already follow this vocation
+      // change status to Following
+      await UserSubVocationModel.update(
+        { usersubvocationStatus: "Following" },
+        { where: { userID: body.userID, subvocationID: body.vocationID } }
+      );
+
+      return {
+        message: "You are now following this vocation",
+      };
+    }
+
+    if (!userSubVocation) {
+
+      try {
+        let subVocation = await SubVocationModel.findOne({
+          where: { subVocationID : body.vocationID },
+          raw : true
+        })
+  
+        await UserSubVocationModel.create({
+          userID: body.userID,
+          subvocationID: body.vocationID,
+          usersubvocationStatus: "Following",
+          vocationID: subVocation.vocationID
+        });
+  
+        return {
+          message: "You are now following this vocation",
+        };
+      } catch(err) {
+        console.log(err)
+      }
+    }
+  }
+
+  
 };
 
 module.exports = {
