@@ -442,47 +442,49 @@ let uploadKycDocument = async (req) => {
 
   // get user id from request
   let userID = req.body.userID;
-
-  // get user details
   let user = await UsersModel.findOne({
     where: { userID: userID },
     raw: true,
   });
 
   // set images in user details
-  user.userGst = files?.GST[0].filename;
-  user.userPan = files?.PAN[0].filename;
-
-  // update user details
-  await UsersModel.update(user, {
-    where: { userID: userID },
-    raw: true,
-  });
+  if (files.PAN) {
+    let user = await UsersModel.findOne({
+      where: { userID: userID },
+      raw: true,
+    });
+    user.userPan = files.PAN[0].filename;
+    user.isPanVerified = "Pending";
+    user.userDocumentRejectionReason = null;
+    await UsersModel.update(user, {
+      where: { userID: userID },
+    });
+  }
+  if (files.GST) {
+    let user = await UsersModel.findOne({
+      where: { userID: userID },
+      raw: true,
+    });
+    user.userGst = files.GST[0].filename;
+    user.isGstVerified = "Pending";
+    user.userDocumentRejectionReason = null;
+    await UsersModel.update(user, {
+      where: { userID: userID },
+    });
+  }
 
   // send mail to notify that document is uploaded
   let mailData = {
     to: user.userEmail,
-    subject: "Vocation KYC Document Uploaded",
+    subject: "KYC Document Uploaded",
     html: `<div>
-    <h1>Vocation KYC Document Uploaded</h1>
+    <h1>KYC Document Uploaded</h1>
     <p>
       Hi ${user.userFirstName},<br />
       <br />
       Your KYC document has been uploaded successfully.
       Please wait for the approval from the admin.
       `,
-    attachments: [
-      {
-        filename: files?.GST[0].filename,
-        content: files?.GST[0].data,
-        contentType: files?.GST[0].mimetype,
-      },
-      {
-        filename: files?.PAN[0].filename,
-        content: files?.PAN[0].data,
-        contentType: files?.PAN[0].mimetype,
-      },
-    ],
   };
 
   await mailer.sendMail(mailData);
@@ -514,10 +516,10 @@ let ApproveHr = async (req) => {
   // send mail to notify that document is uploaded
   let mailData = {
     to: user.userEmail,
-    subject: "Vocation KYC Document Approved",
+    subject: "KYC Document Approved",
     html: `
     <div>
-    <h1>Vocation KYC Document Approved</h1>
+    <h1>KYC Document Approved</h1>
     <p>
       Hi ${user.userFirstName},<br />
       <br />
@@ -562,10 +564,10 @@ let RejectHr = async (req) => {
   // send mail to notify that document is uploaded
   let mailData = {
     to: user.userEmail,
-    subject: "Vocation KYC Document Rejected",
+    subject: "KYC Document Rejected",
     html: `
     <div>
-    <h1>Vocation KYC Document Rejected</h1>
+    <h1>KYC Document Rejected</h1>
     <p>
       Hi ${user.userFirstName},<br />
       <br />
@@ -627,10 +629,10 @@ const approveRejectSingleDocument = async (req) => {
       // mail for user that document is approved
       let mailData = {
         to: user.userEmail,
-        subject: "Vocation KYC Document Approved",
+        subject: "KYC Document Approved",
         html: `
           <div>
-          <h1>Vocation KYC Document Approved</h1>
+          <h1>KYC Document Approved</h1>
           <p>
             Hi ${user.userFirstName},<br />
             <br />
