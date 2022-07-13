@@ -26,6 +26,7 @@ const sequelize = require("sequelize");
 const { voilatedKeywords } = require("../helpers/voilatedKeywords");
 const UservocationModel = require("../models/User_vocations");
 const UserSubVocationModel = require("../models/User_subvocations");
+const userFollowModal = require("../models/UserFollowID");
 
 let generateAuthToken = async (phone) => {
   return uuidv4();
@@ -166,18 +167,20 @@ let QuestionList = async (body) => {
 
         if(allQuestionList[i].vocType == 'vocation') {
           let userFollowedVocation = await UservocationModel.findAll({
-            where : {vocationID : allQuestionList[i].vocationID, uservocationStatus: 'Following'} 
+            where : {vocationID : allQuestionList[i].vocationID, userID : body.userID, uservocationStatus: 'Following'},
+            raw: true
           })
-          if(userFollowedVocation) {
+          if(userFollowedVocation.length) {
             allQuestion.push(allQuestionList[i])
           }
         }
 
         if(allQuestionList[i].vocType == 'subvocation') {
           let userFollowedSubVocation = await UserSubVocationModel.findAll({
-            where : {subvocationID : allQuestionList[i].vocationID, usersubvocationStatus: 'Following'} 
+            where : {subvocationID : allQuestionList[i].vocationID, userID : body.userID, usersubvocationStatus: 'Following'},
+            raw : true
           })
-          if(userFollowedSubVocation) {
+          if(userFollowedSubVocation.length) {
             allQuestion.push(allQuestionList[i])
           }
         }
@@ -346,18 +349,20 @@ let QuestionList = async (body) => {
         
         if(allQuestionList[i].vocType == 'vocation') {
           let userFollowedVocation = await UservocationModel.findAll({
-            where : {vocationID : allQuestionList[i].vocationID, uservocationStatus: 'Following'} 
+            where : {vocationID : allQuestionList[i].vocationID, userID : body.userID, uservocationStatus: 'Following'},
+            raw: true 
           })
-          if(userFollowedVocation) {
+          if(userFollowedVocation.length) {
             allQuestion.push(allQuestionList[i])
           }
         }
 
         if(allQuestionList[i].vocType == 'subvocation') {
           let userFollowedSubVocation = await UserSubVocationModel.findAll({
-            where : {subvocationID : allQuestionList[i].vocationID, usersubvocationStatus: 'Following'} 
+            where : {subvocationID : allQuestionList[i].vocationID, userID : body.userID, usersubvocationStatus: 'Following'},
+            raw: true
           })
-          if(userFollowedSubVocation) {
+          if(userFollowedSubVocation.length) {
             allQuestion.push(allQuestionList[i])
           }
         }
@@ -441,6 +446,18 @@ let QuestionList = async (body) => {
           config.upload_entities.user_profile_image_folder +
           user.userProfilePicture;
         allQuestion[i].user = user;
+
+        let isFollowed = await userFollowModal.findOne({
+          where : {userfollowUserID : allQuestion[i].userID, userID: body.userID},
+          raw : true
+        })
+
+        if(isFollowed) {
+          allQuestion[i].isFollow = true
+        }
+        if(!isFollowed) {
+          allQuestion[i].isFollow = false
+        }
 
         allQuestion[i].comments = await QuestionsCommentModel.findAll({
           where: { queID: allQuestion[i].queID },

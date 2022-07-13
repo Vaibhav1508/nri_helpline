@@ -550,23 +550,28 @@ let getUserFollowers = async (req) => {
     where: { userID },
     raw: true,
   });
-  let user = await UserModel.findOne({
-    where: { userID },
-    raw: true,
-  });
-  let followers = await UserModel.findAll({
-    where: { userID: userFollowers.map((x) => x.userfollowUserID) },
-    raw: true,
-  });
-  followers.forEach((x) => {
-    x.userProfilePicture =
-      config.upload_folder +
-      config.upload_entities.user_profile_image_folder +
-      x.userProfilePicture;
 
-    x.isFollow = true;
-  });
-  return { followers };
+  try {
+    let user = await UserModel.findOne({
+      where: { userID },
+      raw: true,
+    });
+    let followers = await UserModel.findAll({
+      where: { userID: userFollowers.map((x) => x.userfollowUserID) },
+      raw: true,
+    });
+    followers.forEach((x) => {
+      x.userProfilePicture =
+        config.upload_folder +
+        config.upload_entities.user_profile_image_folder +
+        x.userProfilePicture;
+  
+      x.isFollow = true;
+    });
+    return { followers };
+  } catch(err) {
+    console.log(err)
+  }
 };
 
 const unfollowUser = async (req) => {
