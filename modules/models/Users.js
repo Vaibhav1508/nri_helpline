@@ -157,6 +157,14 @@ const UsersModal = sequelize_mysql.define(
       type: Sequelize.STRING,
       defaultValue: null,
     },
+    isGstVerified: {
+      type: Sequelize.ENUM,
+      values: ["Approved", "Rejected", "Pending"],
+    },
+    isPanVerified: {
+      type: Sequelize.ENUM,
+      values: ["Approved", "Rejected", "Pending"],
+    },
     userPan: {
       type: Sequelize.STRING,
       defaultValue: null,

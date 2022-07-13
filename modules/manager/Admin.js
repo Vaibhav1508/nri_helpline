@@ -297,52 +297,57 @@ let craeateBusinessAssociate = async (req) => {
 };
 
 let AssociateUpdate = async (req) => {
-  let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+  try {
+    let body = req.body.body ? JSON.parse(req.body.body) : req.body;
 
-  [
-    "companyName",
-    "userFirstName",
-    "userEmail",
-    "userMobile",
-    "languageID",
-    "streetAddress",
-    "userCountryCode",
-    "userStateCode",
-    "userCityCode",
-  ].forEach((x) => {
-    if (!body[x]) {
-      throw new BadRequestError(x + " is required");
-    }
-  });
+    [
+      "companyName",
+      "userFirstName",
+      "userEmail",
+      "userMobile",
+      "languageID",
+      "streetAddress",
+      "userCountryCode",
+      "userStateCode",
+      "userCityCode",
+    ].forEach((x) => {
+      if (!body[x]) {
+        throw new BadRequestError(x + " is required");
+      }
+    });
 
-  await UsersModel.update(body, {
-    where: { userID: req.params.userID },
-    raw: true,
-  });
-  let user = await UsersModel.findOne({
-    where: { userID: req.params.userID },
-    raw: true,
-  });
-
-  // update company details
-  await CompanyModel.update(
-    {
-      companyName: body.companyName,
-      companyEmail: body.userEmail,
-      companyLocations: body.streetAddress,
-      companyStreet2: body.streetAddress2 ? body.streetAddress2 : "",
-      companyPincode: body.companyPincode ? body.companyPincode : "",
-      companyPhoneNumber: body.companyPhoneNumber
-        ? body.companyPhoneNumber
-        : "",
-    },
-    {
-      where: { companyID: user.userCompanyId },
+    await UsersModel.update(body, {
+      where: { userID: req.params.userID },
       raw: true,
-    }
-  );
+    });
+    let user = await UsersModel.findOne({
+      where: { userID: req.params.userID },
+      raw: true,
+    });
 
-  return { slides: user };
+    // update company details
+    await CompanyModel.update(
+      {
+        companyName: body.companyName,
+        companyEmail: body.userEmail,
+        companyLocations: body.streetAddress,
+        companyStreet2: body.streetAddress2 ? body.streetAddress2 : "",
+        companyPincode: body.companyPincode ? body.companyPincode : "",
+        companyPhoneNumber: body.companyPhoneNumber
+          ? body.companyPhoneNumber
+          : "",
+      },
+      {
+        where: { companyID: user.userCompanyId },
+        raw: true,
+      }
+    );
+
+    return { slides: user };
+  } catch (err) {
+    console.log(err);
+    throw new BadRequestError(err.errors);
+  }
 };
 
 // get associate list
@@ -547,8 +552,6 @@ let RejectHr = async (req) => {
     {
       userDocumentVerified: "No",
       userDocumentRejectionReason: body.reason,
-      userGst: null,
-      userPan: null,
     },
     {
       where: { userID: body.userID },
@@ -580,6 +583,72 @@ let RejectHr = async (req) => {
   return { status: true };
 };
 
+// approve and reject single document Gst or Pan
+const approveRejectSingleDocument = async (req) => {
+  try {
+    let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+
+    let user = await UsersModel.findOne({
+      where: { userID: body.userID },
+      raw: true,
+    });
+
+    if (body.type == "GST" && body.status == "Approved") {
+      user.isGstVerified = "Approved";
+    } else if (body.type == "GST" && body.status == "Rejected") {
+      user.isGstVerified = "Rejected";
+    }
+    if (body.type == "PAN" && body.status == "Approved") {
+      user.isPanVerified = "Approved";
+    } else if (body.type == "PAN" && body.status == "Rejected") {
+      user.isPanVerified = "Rejected";
+    }
+
+    await UsersModel.update(user, {
+      where: { userID: body.userID },
+    });
+
+    user = await UsersModel.findOne({
+      where: { userID: body.userID },
+      raw: true,
+    });
+
+    if (user.isGstVerified == "Approved" && user.isPanVerified == "Approved") {
+      await UsersModel.update(
+        {
+          userDocumentVerified: "Yes",
+        },
+        {
+          where: { userID: body.userID },
+          raw: true,
+        }
+      );
+
+      // mail for user that document is approved
+      let mailData = {
+        to: user.userEmail,
+        subject: "Vocation KYC Document Approved",
+        html: `
+          <div>
+          <h1>Vocation KYC Document Approved</h1>
+          <p>
+            Hi ${user.userFirstName},<br />
+            <br />
+            Your KYC document has been approved.
+          </p>
+          </div>
+          `,
+      };
+      await mailer.sendMail(mailData);
+    }
+
+    return { status: true };
+  } catch (error) {
+    console.log(error);
+    throw new Error(error);
+  }
+};
+
 module.exports = {
   Login: Login,
   UsersList: UsersList,
@@ -593,4 +662,5 @@ module.exports = {
   uploadKycDocument,
   ApproveHr,
   RejectHr,
+  approveRejectSingleDocument,
 };

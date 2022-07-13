@@ -589,6 +589,19 @@ let RejectHr = (req, res, next) => {
     .catch(next);
 };
 
+const approveRejectSingleDocument = (req, res, next) => {
+  return adminManager
+    .approveRejectSingleDocument(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
 module.exports = {
   Login: Login,
   changePassword: changePassword,
@@ -604,4 +617,5 @@ module.exports = {
   uploadKycDocument,
   ApproveHr,
   RejectHr,
+  approveRejectSingleDocument,
 };
