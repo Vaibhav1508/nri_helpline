@@ -48,14 +48,11 @@ let onSuccess = (req, res, next) => {
 let onError = (err, req, res, next) => {
   //console.log('Inside error listener.',err);
 
-  if (err.message === "Only images are allowed") {
-    res.status(500).json({
-      status: "error",
-      message: "Only images are allowed",
-    });
-
-    return next();
-  }
+  // if (err.message === "Only images are allowed") {
+  //   res.status(500).json({
+  //     status: "error",
+  //     message: "Only images are allowed",
+  //   });
 
   res.status(err.status || HTTP_STATUS.INTERNAL_SERVER_ERROR);
 

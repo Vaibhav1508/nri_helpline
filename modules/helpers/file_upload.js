@@ -5,6 +5,7 @@ let _ = require("lodash"),
   multer = require("multer"),
   fs = require("fs-promise");
 const path = require("path");
+const BadRequestError = require("../errors/badRequestError");
 
 const mime_type = {
   "application/vnd.ms-excel": "csv",
@@ -148,7 +149,9 @@ let uploadHrKycDocuments = multer({
   fileFilter: function (req, file, callback) {
     var ext = path.extname(file.originalname);
     if (ext !== ".png" && ext !== ".jpg" && ext !== ".jpeg" && ext !== ".pdf") {
-      return callback(new Error("Only images are allowed"));
+      return callback(
+        new BadRequestError("Please upload a valid image or pdf file")
+      );
     }
     callback(null, true);
   },
