@@ -34,10 +34,20 @@ let Login = async (body) => {
     }
   });
 
-  let findData = {};
-  findData["$or"] = [{ userEmail: { $eq: body.userEmail } }];
-  findData["$and"] = [{ userPassword: { $eq: md5(body.userPassword) } }];
-  let user = await UserModel.findOne({ where: findData, raw: true });
+  // find user by email
+  let user = await UserModel.findOne({
+    where: { userEmail: body.userEmail.trim() },
+    raw: true,
+  });
+
+  if (!user) {
+    throw new BadRequestError("Email is Invalid");
+  }
+
+  // check password
+  if (user.userPassword !== md5(body.userPassword.trim())) {
+    throw new BadRequestError("Password is incorrect");
+  }
 
   if (!user) {
     throw new BadRequestError("Please check your credentials");
@@ -55,10 +65,13 @@ let Login = async (body) => {
     if (industry) {
       user.industryName = industry.industryName;
     }
-    user.userProfilePicture =
-      config.upload_folder +
-      config.upload_entities.user_profile_image_folder +
-      user.userProfilePicture;
+    user.userProfilePicture = user.userProfilePicture
+      ? config.upload_folder +
+        config.upload_entities.user_profile_image_folder +
+        user.userProfilePicture
+      : config.upload_folder +
+        config.upload_entities.user_profile_image_folder +
+        "profile_bg.png";
 
     if (user.userType == "HR") {
       let company = await CompanyModal.findOne({
@@ -456,10 +469,13 @@ let UserUpdate = async (req) => {
     raw: true,
   });
   user.industryName = industry.industryName;
-  user.userProfilePicture =
-    config.upload_folder +
-    config.upload_entities.user_profile_image_folder +
-    user.userProfilePicture;
+  user.userProfilePicture = user.userProfilePicture
+    ? config.upload_folder +
+      config.upload_entities.user_profile_image_folder +
+      user.userProfilePicture
+    : config.upload_folder +
+      config.upload_entities.user_profile_image_folder +
+      "profile_bg.png";
 
   return { slides: user };
 };
@@ -560,17 +576,31 @@ let getUserFollowers = async (req) => {
       where: { userID: userFollowers.map((x) => x.userfollowUserID) },
       raw: true,
     });
-    followers.forEach((x) => {
-      x.userProfilePicture =
-        config.upload_folder +
-        config.upload_entities.user_profile_image_folder +
-        x.userProfilePicture;
-  
+    let industry = await IndustryModel.findAll({
+      where: { industryID: followers.map((x) => x.industryID) },
+      raw: true,
+    });
+
+    followers.forEach(async (x) => {
+      x.userProfilePicture = x.userProfilePicture
+        ? config.upload_folder +
+          config.upload_entities.user_profile_image_folder +
+          x.userProfilePicture
+        : config.upload_folder +
+          config.upload_entities.user_profile_image_folder +
+          "profile_bg.png";
+
       x.isFollow = true;
+
+      // industry name
+
+      x.industryName = industry.find(
+        (y) => y.industryID === x.industryID
+      )?.industryName;
     });
     return { followers };
-  } catch(err) {
-    console.log(err)
+  } catch (err) {
+    console.log(err);
   }
 };
 
@@ -616,67 +646,74 @@ const followUser = async (req) => {
 const userVocationFollowList = async (req) => {
   const { userID } = req.params;
 
-  if(!userID) {
-    throw new BadRequestError('User id is required')
+  if (!userID) {
+    throw new BadRequestError("User id is required");
   }
 
   let vocations = await VocationModal.findAll({
-    where : {vocationStatus : 'Active'},
-    raw : true
-  })
+    where: { vocationStatus: "Active" },
+    raw: true,
+  });
 
   let subVocation = await SubVoctionModel.findAll({
-    where : {subVocationStatus : 'Active'},
-    raw : true
-  })
+    where: { subVocationStatus: "Active" },
+    raw: true,
+  });
 
-  for(let i = 0; i < vocations.length; i++) {
+  for (let i = 0; i < vocations.length; i++) {
     let userFollowedVocation = await UserVoctionModel.findOne({
-      where : {userID : userID, vocationID : vocations[i].vocationID, uservocationStatus: 'Following'}
-    })
+      where: {
+        userID: userID,
+        vocationID: vocations[i].vocationID,
+        uservocationStatus: "Following",
+      },
+    });
 
-    if(userFollowedVocation) {
-      vocations[i].userFollowing = true
+    if (userFollowedVocation) {
+      vocations[i].userFollowing = true;
     } else {
-      vocations[i].userFollowing = false
+      vocations[i].userFollowing = false;
     }
   }
 
-  for(let i = 0; i < subVocation.length; i++) {
+  for (let i = 0; i < subVocation.length; i++) {
     let userFollowedSubVocation = await UserSubVocationModel.findOne({
-      where : {userID : userID, subvocationID : subVocation[i].subVocationID, usersubvocationStatus: 'Following'}
-    })
+      where: {
+        userID: userID,
+        subvocationID: subVocation[i].subVocationID,
+        usersubvocationStatus: "Following",
+      },
+    });
 
-    if(userFollowedSubVocation) {
-      subVocation[i].userFollowing = true
+    if (userFollowedSubVocation) {
+      subVocation[i].userFollowing = true;
     } else {
-      subVocation[i].userFollowing = false
+      subVocation[i].userFollowing = false;
     }
   }
 
-  let slides = {}
-  slides.vocation = vocations
-  slides.subVocations = subVocation
+  let slides = {};
+  slides.vocation = vocations;
+  slides.subVocations = subVocation;
   return slides;
 };
 
 const unFollowVocation = async (req) => {
   const body = req.body.body ? JSON.parse(req.body.body) : req.body;
-  ["userID", "uservocationID","vocType"].forEach((x) => {
+  ["userID", "uservocationID", "vocType"].forEach((x) => {
     if (!body[x]) {
       throw new BadRequestError(x + " is required");
     }
   });
 
-  if(body.vocType == 'vocation') {
-
+  if (body.vocType == "vocation") {
     // find record exist or not
     let alreadyExist = await UservocationModel.findOne({
-      where: { userID: body.userID, vocationID : body.uservocationID },
-      raw : true
+      where: { userID: body.userID, vocationID: body.uservocationID },
+      raw: true,
     });
 
-    if(alreadyExist) {
+    if (alreadyExist) {
       // change status to Unfollowed
       await UservocationModel.update(
         { uservocationStatus: "Unfollowed" },
@@ -688,34 +725,33 @@ const unFollowVocation = async (req) => {
       };
     }
 
-    if(!alreadyExist) {
+    if (!alreadyExist) {
       // change status to Unfollowed
 
       try {
-        await UservocationModel.create(
-          { userID: body.userID,
-            vocationID: body.uservocationID,
-            uservocationStatus: "Unfollowed" 
-          });
-  
+        await UservocationModel.create({
+          userID: body.userID,
+          vocationID: body.uservocationID,
+          uservocationStatus: "Unfollowed",
+        });
+
         return {
           message: "You are now unfollowing this vocation",
         };
-      } catch(err) {
-        console.log(err)
+      } catch (err) {
+        console.log(err);
       }
     }
   }
 
-  if(body.vocType == 'subvocation') {
-
+  if (body.vocType == "subvocation") {
     // find record exist or not
     let alreadyExist = await UserSubVocationModel.findOne({
-      where: { userID: body.userID, subvocationID : body.uservocationID },
-      raw : true
+      where: { userID: body.userID, subvocationID: body.uservocationID },
+      raw: true,
     });
 
-    if(alreadyExist) {
+    if (alreadyExist) {
       // change status to Unfollowed
       await UserSubVocationModel.update(
         { usersubvocationStatus: "Unfollowed" },
@@ -727,27 +763,26 @@ const unFollowVocation = async (req) => {
       };
     }
 
-    if(!alreadyExist) {
-
+    if (!alreadyExist) {
       try {
         let subVocation = await SubVocationModel.findOne({
           where: { subVocationID: body.uservocationID },
-          raw : true
-        })
-
-        // change status to Unfollowed
-      await UserSubVocationModel.create(
-        { userID: body.userID,
-          subvocationID: body.vocationID,
-          uservocationStatus: "Unfollowed",
-          vocationID : subVocation.vocationID
+          raw: true,
         });
 
-      return {
-        message: "You are now unfollowing this vocation",
-      };
-      } catch(err) {
-        console.log(err)
+        // change status to Unfollowed
+        await UserSubVocationModel.create({
+          userID: body.userID,
+          subvocationID: body.vocationID,
+          uservocationStatus: "Unfollowed",
+          vocationID: subVocation.vocationID,
+        });
+
+        return {
+          message: "You are now unfollowing this vocation",
+        };
+      } catch (err) {
+        console.log(err);
       }
     }
   }
@@ -755,7 +790,7 @@ const unFollowVocation = async (req) => {
 
 const followVocation = async (req) => {
   const body = req.body.body ? JSON.parse(req.body.body) : req.body;
-  ["userID", "vocationID","vocType"].forEach((x) => {
+  ["userID", "vocationID", "vocType"].forEach((x) => {
     if (!body[x]) {
       throw new BadRequestError(x + " is required");
     }
@@ -763,22 +798,23 @@ const followVocation = async (req) => {
 
   // check if user already following five vocations
   let userFollowingVocationCount = await UservocationModel.count({
-    where: { userID: body.userID, uservocationStatus: 'Following' },
+    where: { userID: body.userID, uservocationStatus: "Following" },
     raw: true,
   });
 
   let userFollowingSubVocationCount = await UserSubVocationModel.count({
-    where: { userID: body.userID, usersubvocationStatus: 'Following' },
+    where: { userID: body.userID, usersubvocationStatus: "Following" },
     raw: true,
   });
 
-  let totalFollowingCount = userFollowingVocationCount + userFollowingSubVocationCount;
+  let totalFollowingCount =
+    userFollowingVocationCount + userFollowingSubVocationCount;
   // return if user is following more then 5 vocation
-  if(totalFollowingCount > 4) {
-    return {message : 'You can only follow upto 5 vocations'}
+  if (totalFollowingCount > 4) {
+    return { message: "You can only follow upto 5 vocations" };
   }
 
-  if(body.vocType == 'vocation') {
+  if (body.vocType == "vocation") {
     // check if user already follow this vocation
     let userVocation = await UservocationModel.findOne({
       where: { userID: body.userID, vocationID: body.vocationID },
@@ -811,7 +847,7 @@ const followVocation = async (req) => {
     }
   }
 
-  if(body.vocType == 'subvocation') {
+  if (body.vocType == "subvocation") {
     // check if user already follow this vocation
     let userSubVocation = await UserSubVocationModel.findOne({
       where: { userID: body.userID, subvocationID: body.vocationID },
@@ -832,30 +868,27 @@ const followVocation = async (req) => {
     }
 
     if (!userSubVocation) {
-
       try {
         let subVocation = await SubVocationModel.findOne({
-          where: { subVocationID : body.vocationID },
-          raw : true
-        })
-  
+          where: { subVocationID: body.vocationID },
+          raw: true,
+        });
+
         await UserSubVocationModel.create({
           userID: body.userID,
           subvocationID: body.vocationID,
           usersubvocationStatus: "Following",
-          vocationID: subVocation.vocationID
+          vocationID: subVocation.vocationID,
         });
-  
+
         return {
           message: "You are now following this vocation",
         };
-      } catch(err) {
-        console.log(err)
+      } catch (err) {
+        console.log(err);
       }
     }
   }
-
-  
 };
 
 module.exports = {

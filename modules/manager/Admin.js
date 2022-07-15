@@ -280,7 +280,7 @@ let craeateBusinessAssociate = async (req) => {
       <p>
         Hi ${body.userFirstName},<br />
         <br />
-        Welcome to Vocation. You have successfully registered as a Business Associate.
+        Welcome to Vocation. You have successfully registered as a Corporate.
         
         <br />
         Your Password to login into app is 123456.
@@ -436,60 +436,65 @@ let getAssociateDetails = async (req) => {
 
 // upload kyc document
 let uploadKycDocument = async (req) => {
-  let body = req.body.body ? JSON.parse(req.body.body) : req.body;
-  // get files from request
-  let files = req.files;
+  try {
+    let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+    // get files from request
+    let files = req.files;
 
-  // get user id from request
-  let userID = req.body.userID;
-  let user = await UsersModel.findOne({
-    where: { userID: userID },
-    raw: true,
-  });
-
-  // set images in user details
-  if (files.PAN) {
+    // get user id from request
+    let userID = req.body.userID;
     let user = await UsersModel.findOne({
       where: { userID: userID },
       raw: true,
     });
-    user.userPan = files.PAN[0].filename;
-    user.isPanVerified = "Pending";
-    user.userDocumentRejectionReason = null;
-    await UsersModel.update(user, {
-      where: { userID: userID },
-    });
+
+    // set images in user details
+    if (files.PAN) {
+      let user = await UsersModel.findOne({
+        where: { userID: userID },
+        raw: true,
+      });
+      user.userPan = files.PAN[0].filename;
+      user.isPanVerified = "Pending";
+      user.userDocumentRejectionReason = null;
+      await UsersModel.update(user, {
+        where: { userID: userID },
+      });
+    }
+    if (files.GST) {
+      let user = await UsersModel.findOne({
+        where: { userID: userID },
+        raw: true,
+      });
+      user.userGst = files.GST[0].filename;
+      user.isGstVerified = "Pending";
+      user.userDocumentRejectionReason = null;
+      await UsersModel.update(user, {
+        where: { userID: userID },
+      });
+    }
+
+    // send mail to notify that document is uploaded
+    let mailData = {
+      to: user.userEmail,
+      subject: "KYC Document Uploaded",
+      html: `<div>
+      <h1>KYC Document Uploaded</h1>
+      <p>
+        Hi ${user.userFirstName},<br />
+        <br />
+        Your KYC document has been uploaded successfully.
+        Please wait for the approval from the admin.
+        `,
+    };
+
+    await mailer.sendMail(mailData);
+
+    return { status: true };
+  } catch (err) {
+    console.log(err);
+    throw new BadRequestError(err.errors);
   }
-  if (files.GST) {
-    let user = await UsersModel.findOne({
-      where: { userID: userID },
-      raw: true,
-    });
-    user.userGst = files.GST[0].filename;
-    user.isGstVerified = "Pending";
-    user.userDocumentRejectionReason = null;
-    await UsersModel.update(user, {
-      where: { userID: userID },
-    });
-  }
-
-  // send mail to notify that document is uploaded
-  let mailData = {
-    to: user.userEmail,
-    subject: "KYC Document Uploaded",
-    html: `<div>
-    <h1>KYC Document Uploaded</h1>
-    <p>
-      Hi ${user.userFirstName},<br />
-      <br />
-      Your KYC document has been uploaded successfully.
-      Please wait for the approval from the admin.
-      `,
-  };
-
-  await mailer.sendMail(mailData);
-
-  return { status: true };
 };
 
 // Approve and reject associate

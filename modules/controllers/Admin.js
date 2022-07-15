@@ -552,16 +552,18 @@ let AssociateDetails = (req, res, next) => {
 };
 
 let uploadKycDocument = (req, res, next) => {
-  return adminManager
-    .uploadKycDocument(req)
-    .then((data) => {
+  try {
+    return adminManager.uploadKycDocument(req).then((data) => {
       let result = {
         status: 200,
         data: data,
       };
       return res.json(result);
-    })
-    .catch(next);
+    });
+  } catch (err) {
+    console.log(err);
+    throw err;
+  }
 };
 
 let ApproveHr = (req, res, next) => {
