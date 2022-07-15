@@ -706,7 +706,11 @@ let MyQuestionList = async (body) => {
   let limit = body.limit ? parseInt(body.limit) : 10;
   let page = body.page || 1;
   let offset = (page - 1) * limit;
-  let findData = { queStatus: "Active", userID: body.userID };
+  let findData = {
+    queStatus: "Active",
+    userID: body.userID,
+    queMode: "Published",
+  };
 
   if (body.filters) {
     if (body.filters.searchtext) {
@@ -1999,6 +2003,383 @@ let ViewAllMyQuestionList = async (body) => {
   }
 };
 
+const viewAllMyDraftQuestion = async (body) => {
+  let limit = body.limit ? parseInt(body.limit) : 10;
+  let page = body.page || 1;
+  let offset = (page - 1) * limit;
+  let findData = { queStatus: "Active", queMode: "Draft" };
+  if (body.filters) {
+    if (body.filters.searchtext) {
+      findData["$and"] = [
+        { queType: { $like: "%" + body.filters.searchtext + "%" } },
+        { queDescription: { $like: "%" + body.filters.searchtext + "%" } },
+      ];
+    }
+  }
+  if (body.page || body.limit) {
+    let allQuestion = await QuestionModel.findAll({
+      where: findData,
+      limit,
+      offset,
+      order: [["queID", "DESC"]],
+      raw: true,
+    });
+
+    for (let i = 0; i < allQuestion.length; i++) {
+      if (allQuestion[i].queType == "Post") {
+        let queImages = await QuestionImagesModel.findAll({
+          where: { queID: allQuestion[i].queID },
+        });
+
+        let img = [];
+        for (let i = 0; i < queImages.length; i++) {
+          img.push(
+            config.upload_folder +
+              config.upload_entities.post_image_folder +
+              queImages[i].image
+          );
+        }
+        allQuestion[i].queImages = img;
+      }
+
+      let liked = await QuestionLikeModel.count({
+        where: { queID: allQuestion[i].queID, userID: body.userID },
+        raw: true,
+      });
+
+      allQuestion[i].isLiked = liked == 1 ? true : false;
+
+      let unliked = await QuestionUnlikeModel.count({
+        where: { queID: allQuestion[i].queID, userID: body.userID },
+        raw: true,
+      });
+
+      allQuestion[i].isUnliked = unliked == 1 ? true : false;
+
+      allQuestion[i].queTotalAnswerCount = await QuestionsAnswerModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
+      });
+
+      allQuestion[i].queTotalLikeCount = await QuestionLikeModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
+      });
+
+      allQuestion[i].queTotalDislikeCount = await QuestionUnlikeModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
+      });
+
+      allQuestion[i].queTotalBookmarkCount = await QuestionsBookmarkModel.count(
+        {
+          where: { queID: allQuestion[i].queID },
+          raw: true,
+        }
+      );
+
+      allQuestion[i].queTotalCommentCount = await QuestionsCommentModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
+      });
+
+      let user = await UsersModal.findOne({
+        where: { userID: allQuestion[i].userID },
+        attributes: ["userFirstName", "userLastName", "userProfilePicture"],
+        raw: true,
+      });
+
+      user.userProfilePicture = user?.userProfilePicture
+        ? config.upload_folder +
+          config.upload_entities.user_profile_image_folder +
+          user.userProfilePicture
+        : config.upload_folder +
+          config.upload_entities.user_profile_image_folder +
+          "profile_bg.png";
+      allQuestion[i].user = user;
+
+      let isFollowed = await userFollowModal.findOne({
+        where: { userfollowUserID: allQuestion[i].userID, userID: body.userID },
+        raw: true,
+      });
+
+      if (isFollowed) {
+        allQuestion[i].isFollow = true;
+      }
+      if (!isFollowed) {
+        allQuestion[i].isFollow = false;
+      }
+
+      allQuestion[i].comments = await QuestionsCommentModel.findAll({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
+      });
+
+      for (let i = 0; i < allQuestion[i].comments.length; i++) {
+        allQuestion[i].comments[i].user = await UsersModal.findOne({
+          where: { userID: allQuestion[i].comments[i].userID },
+          attributes: ["userFirstName", "userLastName", "userProfilePicture"],
+          raw: true,
+        });
+
+        // Comment Like count will be done here
+        allQuestion[i].comments[j].commentsLikeCount =
+          await QuestionsCommentLikeModel.count({
+            where: { queCommentID: allQuestion[i].comments[j]?.queCommentID },
+            raw: true,
+          });
+
+        // Comment Dislikes count will be done here
+        allQuestion[i].comments[j].commentsUnlikeCount =
+          await QuestionsCommentUnlikeModel.count({
+            where: { queCommentID: allQuestion[i].comments[j]?.queCommentID },
+            raw: true,
+          });
+      }
+
+      allQuestion[i].answer = await QuestionsAnswerModal.findAll({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
+      });
+
+      for (let j = 0; j < allQuestion[i].answer?.length; j++) {
+        allQuestion[i].answer[j].user = await UsersModal.findOne({
+          where: { userID: allQuestion[i].answer[j]?.userID },
+          attributes: ["userFirstName", "userLastName", "userProfilePicture"],
+          raw: true,
+        });
+
+        allQuestion[i].answer[j].user.userProfilePicture =
+          user?.userProfilePicture
+            ? config.upload_folder +
+              config.upload_entities.user_profile_image_folder +
+              user.userProfilePicture
+            : config.upload_folder +
+              config.upload_entities.user_profile_image_folder +
+              "profile_bg.png";
+
+        try {
+          allQuestion[i].answer[j].answersreply =
+            await QuestionsAnswersReplyModal.findAll({
+              where: { answerID: allQuestion[i].answer[j]?.answerID },
+              raw: true,
+            });
+
+          for (
+            let k = 0;
+            k < allQuestion[i].answer[j]?.answersreply?.length;
+            j++
+          ) {
+            allQuestion[i].answer[j].answersreply[k].user =
+              await UsersModal.findOne({
+                where: {
+                  userID: allQuestion[i].answer[j].answersreply[k]?.userID,
+                },
+                attributes: [
+                  "userFirstName",
+                  "userLastName",
+                  "userProfilePicture",
+                ],
+                raw: true,
+              });
+          }
+        } catch (err) {
+          console.log(err);
+        }
+      }
+    }
+    let allQuestionCount = await QuestionModel.count({
+      where: findData,
+      order: [["queID", "DESC"]],
+      raw: true,
+    });
+
+    let _result = { total_count: 0 };
+    _result.slides = allQuestion;
+    _result.total_count = allQuestionCount;
+    return _result;
+  } else {
+    let allQuestion = await QuestionModel.findAll({
+      where: findData,
+      order: [["queID", "DESC"]],
+      raw: true,
+    });
+
+    for (let i = 0; i < allQuestion.length; i++) {
+      if (allQuestion[i].queType == "Post") {
+        let queImages = await QuestionImagesModel.findAll({
+          where: { queID: allQuestion[i].queID },
+        });
+
+        let img = [];
+        for (let i = 0; i < queImages.length; i++) {
+          img.push(
+            config.upload_folder +
+              config.upload_entities.post_image_folder +
+              queImages[i].image
+          );
+        }
+        allQuestion[i].queImages = img;
+      }
+
+      let bookmarked = await QuestionsBookmarkModel.count({
+        where: { queID: allQuestion[i].queID, userID: body.userID },
+        raw: true,
+      });
+
+      allQuestion[i].isBookMarked = bookmarked == 1 ? true : false;
+
+      let liked = await QuestionLikeModel.count({
+        where: { queID: allQuestion[i].queID, userID: body.userID },
+        raw: true,
+      });
+
+      allQuestion[i].isLiked = liked == 1 ? true : false;
+
+      let unliked = await QuestionUnlikeModel.count({
+        where: { queID: allQuestion[i].queID, userID: body.userID },
+        raw: true,
+      });
+
+      allQuestion[i].isUnliked = unliked == 1 ? true : false;
+
+      allQuestion[i].queTotalAnswerCount = await QuestionsAnswerModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
+      });
+
+      allQuestion[i].queTotalLikeCount = await QuestionLikeModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
+      });
+
+      allQuestion[i].queTotalDislikeCount = await QuestionUnlikeModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
+      });
+
+      allQuestion[i].queTotalBookmarkCount = await QuestionsBookmarkModel.count(
+        {
+          where: { queID: allQuestion[i].queID },
+          raw: true,
+        }
+      );
+
+      allQuestion[i].queTotalCommentCount = await QuestionsCommentModel.count({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
+      });
+
+      let user = await UsersModal.findOne({
+        where: { userID: allQuestion[i].userID },
+        attributes: ["userFirstName", "userLastName", "userProfilePicture"],
+        raw: true,
+      });
+
+      user.userProfilePicture = user?.userProfilePicture
+        ? config.upload_folder +
+          config.upload_entities.user_profile_image_folder +
+          user.userProfilePicture
+        : config.upload_folder +
+          config.upload_entities.user_profile_image_folder +
+          "profile_bg.png";
+      allQuestion[i].user = user;
+
+      let isFollowed = await userFollowModal.findOne({
+        where: { userfollowUserID: allQuestion[i].userID, userID: body.userID },
+        raw: true,
+      });
+
+      if (isFollowed) {
+        allQuestion[i].isFollow = true;
+      }
+      if (!isFollowed) {
+        allQuestion[i].isFollow = false;
+      }
+
+      allQuestion[i].comments = await QuestionsCommentModel.findAll({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
+      });
+
+      for (let i = 0; i < allQuestion[i].comments.length; i++) {
+        allQuestion[i].comments[i].user = await UsersModal.findOne({
+          where: { userID: allQuestion[i].comments[i].userID },
+          attributes: ["userFirstName", "userLastName", "userProfilePicture"],
+          raw: true,
+        });
+
+        // Comment Like count will be done here
+        allQuestion[i].comments[j].commentsLikeCount =
+          await QuestionsCommentLikeModel.count({
+            where: { queCommentID: allQuestion[i].comments[j]?.queCommentID },
+            raw: true,
+          });
+
+        // Comment Dislikes count will be done here
+        allQuestion[i].comments[j].commentsUnlikeCount =
+          await QuestionsCommentUnlikeModel.count({
+            where: { queCommentID: allQuestion[i].comments[j]?.queCommentID },
+            raw: true,
+          });
+      }
+
+      allQuestion[i].answer = await QuestionsAnswerModal.findAll({
+        where: { queID: allQuestion[i].queID },
+        raw: true,
+      });
+
+      for (let j = 0; j < allQuestion[i].answer?.length; j++) {
+        let user = await UsersModal.findOne({
+          where: { userID: allQuestion[i].answer[j]?.userID },
+          attributes: ["userFirstName", "userLastName", "userProfilePicture"],
+          raw: true,
+        });
+
+        user.userProfilePicture = user?.userProfilePicture
+          ? config.upload_folder +
+            config.upload_entities.user_profile_image_folder +
+            user.userProfilePicture
+          : config.upload_folder +
+            config.upload_entities.user_profile_image_folder +
+            "profile_bg.png";
+        allQuestion[i].answer[j].user = user;
+
+        let ansReply = await QuestionsAnswersReplyModal.findAll({
+          where: { answerID: allQuestion[i].answer[j]?.answerID },
+          raw: true,
+        });
+
+        allQuestion[i].answer[j].answersreply = ansReply;
+
+        for (
+          let k = 0;
+          k < allQuestion[i].answer[j]?.answersreply?.length;
+          j++
+        ) {
+          allQuestion[i].answer[j].answersreply[k].user =
+            await UsersModal.findOne({
+              where: {
+                userID: allQuestion[i].answer[j].answersreply[k]?.userID,
+              },
+              attributes: [
+                "userFirstName",
+                "userLastName",
+                "userProfilePicture",
+              ],
+              raw: true,
+            });
+        }
+      }
+    }
+    let allQuestionCount = allQuestion.length;
+    let _result = { total_count: 0 };
+    _result.slides = allQuestion;
+    _result.total_count = allQuestionCount;
+    return _result;
+  }
+};
+
 module.exports = {
   CreateQuestion: CreateQuestion,
   QuestionList: QuestionList,
@@ -2021,4 +2402,5 @@ module.exports = {
   getVoilatedQuestion: getVoilatedQuestion,
   approveAndRejectQuestion: approveAndRejectQuestion,
   ViewAllMyQuestionList: ViewAllMyQuestionList,
+  viewAllMyDraftQuestion,
 };

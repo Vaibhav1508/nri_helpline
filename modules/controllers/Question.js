@@ -1221,16 +1221,29 @@ const approveAndRejectQuestion = (req, res, next) => {
 
 let ViewAllMyQuestionList = (req, res, next) => {
   return questionManager
-      .ViewAllMyQuestionList(req.body)
-      .then(data => {
-          let result = {
-              status:200,
-              data: data
-          }
-          return res.json(result);
-      })
-      .catch(next);
-}
+    .ViewAllMyQuestionList(req.body)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+const viewAllMyDraftQuestion = (req, res, next) => {
+  return questionManager
+    .viewAllMyDraftQuestion(req.body)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
 
 module.exports = {
   CreateQuestion: CreateQuestion,
@@ -1253,5 +1266,6 @@ module.exports = {
   updateQuestion: updateQuestion,
   getVoilatedQuestions: getVoilatedQuestions,
   approveAndRejectQuestion: approveAndRejectQuestion,
-  ViewAllMyQuestionList:ViewAllMyQuestionList
+  ViewAllMyQuestionList: ViewAllMyQuestionList,
+  viewAllMyDraftQuestion,
 };
