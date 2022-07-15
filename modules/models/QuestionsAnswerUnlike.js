@@ -5,7 +5,7 @@ const { NONE } = require("sequelize");
 
 const QuestionaAnswerUnlikeModal = sequelize_mysql.define("answerdislikes",
     {
-        answerlikeID :{
+        answerdislikeID :{
             type: Sequelize.INTEGER,
             autoIncrement: true,
             primaryKey: true
