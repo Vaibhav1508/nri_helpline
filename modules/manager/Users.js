@@ -95,86 +95,101 @@ let Login = async (body) => {
 };
 
 let register = async (body) => {
-  if (helper.undefinedOrNull(body)) {
-    throw new BadRequestError("body_empty");
-  }
-  [
-    "userFirstName",
-    "userLastName",
-    "userEmail",
-    "userPassword",
-    "userMobile",
-    "industryID",
-    "userJobDescription",
-    "userType",
-  ].forEach((x) => {
-    if (!body[x]) {
-      throw new BadRequestError(x + " is required");
+  try {
+    if (helper.undefinedOrNull(body)) {
+      throw new BadRequestError("body_empty");
     }
-  });
-
-  let userEmailExit = await UserModel.findOne({
-    where: { userEmail: body.userEmail.trim(), userVerified: "Yes" },
-    attributes: ["userID", "userMobile"],
-  });
-
-  if (userEmailExit) {
-    throw new BadRequestError("Email already exists");
-  }
-
-  let userMobileExist = await UserModel.findOne({
-    where: {
-      userMobile: { $like: `%${body.userMobile.trim()}%` },
-      userVerified: "Yes",
-    },
-    attributes: ["userID", "userMobile"],
-  });
-
-  if (userMobileExist) {
-    throw new BadRequestError("Mobile number alreay exists");
-  }
-
-  let otp = Math.floor(100000 + Math.random() * 900000);
-
-  let user = await UserModel.findOne({
-    where: { userEmail: body.userEmail.trim() },
-    attributes: ["userID", "userMobile"],
-  });
-
-  if (user) {
-    let updateData = {};
-    let optionalFiled = [
+    [
       "userFirstName",
       "userLastName",
+      "userEmail",
+      "userPassword",
+      "userMobile",
       "industryID",
       "userJobDescription",
       "userType",
-    ];
-    optionalFiled.forEach((x) => {
-      if (body[x]) {
-        updateData[x] = body[x];
+    ].forEach((x) => {
+      if (!body[x]) {
+        throw new BadRequestError(x + " is required");
       }
     });
-    updateData["userOTP"] = otp.toString();
-    updateData["userPassword"] = md5(body.userPassword.trim());
-    await UserModel.update(updateData, {
-      where: { userID: user.userID },
-      raw: true,
+
+    let userEmailExit = await UserModel.findOne({
+      where: { userEmail: body.userEmail.trim(), userVerified: "Yes" },
+      attributes: ["userID", "userMobile"],
     });
-    return UserModel.findOne({ where: { userID: user.userID }, raw: true });
-  } else {
-    let createData = {
-      userFirstName: body.userFirstName.trim(),
-      userLastName: body.userLastName.trim(),
-      userEmail: body.userEmail.trim(),
-      userMobile: body.userMobile.trim(),
-      userPassword: md5(body.userPassword.trim()),
-      industryID: body.industryID,
-      userJobDescription: body.userJobDescription,
-      userType: body.userType,
-      userOTP: otp.toString(),
-    };
-    return await UserModel.create(createData);
+
+    if (userEmailExit) {
+      throw new BadRequestError("Email already exists");
+    }
+
+    let userMobileExist = await UserModel.findOne({
+      where: {
+        userMobile: { $like: `%${body.userMobile.trim()}%` },
+        userVerified: "Yes",
+      },
+      attributes: ["userID", "userMobile"],
+    });
+
+    if (userMobileExist) {
+      throw new BadRequestError("Mobile number alreay exists");
+    }
+
+    let otp = Math.floor(100000 + Math.random() * 900000);
+
+    let user = await UserModel.findOne({
+      where: { userEmail: body.userEmail.trim() },
+      attributes: ["userID", "userMobile"],
+    });
+
+    if (user) {
+      let updateData = {};
+      let optionalFiled = [
+        "userFirstName",
+        "userLastName",
+        "industryID",
+        "userJobDescription",
+        "userType",
+      ];
+      optionalFiled.forEach((x) => {
+        if (body[x]) {
+          updateData[x] = body[x];
+        }
+      });
+      updateData["userOTP"] = otp.toString();
+      updateData["userPassword"] = md5(body.userPassword.trim());
+      await UserModel.update(updateData, {
+        where: { userID: user.userID },
+        raw: true,
+      });
+      return UserModel.findOne({ where: { userID: user.userID }, raw: true });
+    } else {
+      let createData = {
+        userFirstName: body.userFirstName.trim(),
+        userLastName: body.userLastName.trim(),
+        userEmail: body.userEmail.trim(),
+        userMobile: body.userMobile.trim(),
+        userPassword: md5(body.userPassword.trim()),
+        industryID: body.industryID,
+        userJobDescription: body.userJobDescription,
+        userType: body.userType,
+        userOTP: otp.toString(),
+      };
+      user = await UserModel.create(createData);
+
+      user.userProfilePicture = user.userProfilePicture
+        ? config.upload_folder +
+          config.upload_entities.user_profile_image_folder +
+          user.userProfilePicture
+        : config.upload_folder +
+          config.upload_entities.user_profile_image_folder +
+          "profile_bg.png";
+
+      return user;
+    }
+  } catch (error) {
+    console.log(error);
+    // throw new BadRequestError("Something went wrong");
   }
 };
 
