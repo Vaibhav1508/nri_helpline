@@ -11,7 +11,7 @@ router.post(
   helper.uploadPostImage.any(),
   controller.CreateQuestion
 );
-router.put("/updatequestions", controller.updateQuestion);
+router.post("/updatequestions", controller.updateQuestion);
 router.post("/questionslist", controller.QuestionList);
 router.post("/myquestionslist", controller.MyQuestionList);
 router.post("/questionslike", controller.QuestionLike);

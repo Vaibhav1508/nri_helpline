@@ -514,38 +514,40 @@ let QuestionList = async (body) => {
         });
 
         for (let j = 0; j < allQuestion[i].answer?.length; j++) {
-
           let liked = await QuestionsAnswerLikeModel.count({
-            where: { answerID: allQuestion[i].answer[j]?.answerID, userID: body.userID },
+            where: {
+              answerID: allQuestion[i].answer[j]?.answerID,
+              userID: body.userID,
+            },
             raw: true,
           });
-  
+
           allQuestion[i].answer[j].isLiked = liked == 1 ? true : false;
-  
+
           let unliked = await QuestionsAnswerUnlikeModel.count({
-            where: { answerID: allQuestion[i].answer[j]?.answerID, userID: body.userID },
+            where: {
+              answerID: allQuestion[i].answer[j]?.answerID,
+              userID: body.userID,
+            },
             raw: true,
           });
-  
+
           allQuestion[i].answer[j].isUnliked = unliked == 1 ? true : false;
 
-          if(allQuestion[i].answer.length){
-
+          if (allQuestion[i].answer.length) {
             // Comment Like count will be done here
             allQuestion[i].answer[j].totalAnswerLikeCount =
-            await QuestionsAnswerLikeModel.count({
-              where: { answerID: allQuestion[i].answer[j]?.answerID },
-              raw: true,
-            });
+              await QuestionsAnswerLikeModel.count({
+                where: { answerID: allQuestion[i].answer[j]?.answerID },
+                raw: true,
+              });
 
             // Comment Dislikes count will be done here
             allQuestion[i].answer[j].totalAnswerUnlikeCount =
-            await QuestionsAnswerUnlikeModel.count({
-              where: { answerID: allQuestion[i].answer[j]?.answerID },
-              raw: true,
-            });
-
-
+              await QuestionsAnswerUnlikeModel.count({
+                where: { answerID: allQuestion[i].answer[j]?.answerID },
+                raw: true,
+              });
           }
 
           let user = await UsersModal.findOne({
@@ -554,13 +556,13 @@ let QuestionList = async (body) => {
             raw: true,
           });
           user.userProfilePicture = user.userProfilePicture
-          ? config.upload_folder +
-            config.upload_entities.user_profile_image_folder +
-            user.userProfilePicture
-          : config.upload_folder +
-            config.upload_entities.user_profile_image_folder +
-            "profile_bg.png";
-          allQuestion[i].answer[j].user = user
+            ? config.upload_folder +
+              config.upload_entities.user_profile_image_folder +
+              user.userProfilePicture
+            : config.upload_folder +
+              config.upload_entities.user_profile_image_folder +
+              "profile_bg.png";
+          allQuestion[i].answer[j].user = user;
 
           let isFollowed = await userFollowModal.findOne({
             where: {
@@ -569,7 +571,7 @@ let QuestionList = async (body) => {
             },
             raw: true,
           });
-  
+
           if (isFollowed) {
             allQuestion[i].answer[j].isFollow = true;
           }
@@ -589,20 +591,19 @@ let QuestionList = async (body) => {
               k < allQuestion[i].answer[j]?.answersreply?.length;
               k++
             ) {
-              let user =
-                await UsersModal.findOne({
-                  where: {
-                    userID: allQuestion[i].answer[j].answersreply[k]?.userID,
-                  },
-                  attributes: [
-                    "userFirstName",
-                    "userLastName",
-                    "userProfilePicture",
-                  ],
-                  raw: true,
-                });
+              let user = await UsersModal.findOne({
+                where: {
+                  userID: allQuestion[i].answer[j].answersreply[k]?.userID,
+                },
+                attributes: [
+                  "userFirstName",
+                  "userLastName",
+                  "userProfilePicture",
+                ],
+                raw: true,
+              });
 
-                user.userProfilePicture = user.userProfilePicture
+              user.userProfilePicture = user.userProfilePicture
                 ? config.upload_folder +
                   config.upload_entities.user_profile_image_folder +
                   user.userProfilePicture
@@ -610,25 +611,32 @@ let QuestionList = async (body) => {
                   config.upload_entities.user_profile_image_folder +
                   "profile_bg.png";
 
-                allQuestion[i].answer[j].answersreply[k].user = user
+              allQuestion[i].answer[j].answersreply[k].user = user;
 
-                let isFollowed = await userFollowModal.findOne({
-                  where: {
-                    userfollowUserID: allQuestion[i].answer[j].answersreply[k].userID,
-                    userID: body.userID,
-                  },
-                  raw: true,
-                });
-        
-                if (isFollowed) {
-                  allQuestion[i].answer[j].answersreply[k].isFollow = true;
-                }
-                if (!isFollowed) {
-                  allQuestion[i].answer[j].answersreply[k].isFollow = false;
-                }
-                allQuestion[i].answer[j].answersreply[k].userID == body.userID ? allQuestion[i].answer[j].isAlreadyRepliedAnswer = true : allQuestion[i].answer[j].isAlreadyRepliedAnswer = false;
+              let isFollowed = await userFollowModal.findOne({
+                where: {
+                  userfollowUserID:
+                    allQuestion[i].answer[j].answersreply[k].userID,
+                  userID: body.userID,
+                },
+                raw: true,
+              });
+
+              if (isFollowed) {
+                allQuestion[i].answer[j].answersreply[k].isFollow = true;
+              }
+              if (!isFollowed) {
+                allQuestion[i].answer[j].answersreply[k].isFollow = false;
+              }
+              allQuestion[i].answer[j].answersreply[k].userID == body.userID
+                ? (allQuestion[i].answer[j].isAlreadyRepliedAnswer = true)
+                : (allQuestion[i].answer[j].isAlreadyRepliedAnswer = false);
             }
-            allQuestion[i].answer[j].answersreply.map(x => x.userID).includes(body.userID) ? allQuestion[i].answer[j].isAlreadyRepliedAnswer = true : allQuestion[i].answer[j].isAlreadyRepliedAnswer = false;
+            allQuestion[i].answer[j].answersreply
+              .map((x) => x.userID)
+              .includes(body.userID)
+              ? (allQuestion[i].answer[j].isAlreadyRepliedAnswer = true)
+              : (allQuestion[i].answer[j].isAlreadyRepliedAnswer = false);
           } catch (err) {
             console.log(err);
           }
@@ -1550,7 +1558,7 @@ let QuestionActivate = async (req) => {
 
 let updateQuestion = async (req) => {
   let body = req.body.body ? JSON.parse(req.body.body) : req.body;
-  ["queQuestion", "queDescription", "vocationID"].forEach((x) => {
+  ["queQuestion", "queDescription", "vocationID", "queID"].forEach((x) => {
     if (!body[x]) {
       throw new BadRequestError(x + " is required");
     }
@@ -1562,6 +1570,11 @@ let updateQuestion = async (req) => {
       updatedata[x] = body[x];
     }
   });
+
+  if (body.status) {
+    updatedata.queMode = "Published";
+  }
+
   await QuestionModel.update(updatedata, {
     where: { queID: body.queID },
     raw: true,
@@ -1981,15 +1994,15 @@ let ViewAllMyQuestionList = async (body) => {
 
       try {
         user.userProfilePicture = user?.userProfilePicture
-        ? config.upload_folder +
-          config.upload_entities.user_profile_image_folder +
-          user.userProfilePicture
-        : config.upload_folder +
-          config.upload_entities.user_profile_image_folder +
-          "profile_bg.png";
-      allQuestion[i].user = user;
+          ? config.upload_folder +
+            config.upload_entities.user_profile_image_folder +
+            user.userProfilePicture
+          : config.upload_folder +
+            config.upload_entities.user_profile_image_folder +
+            "profile_bg.png";
+        allQuestion[i].user = user;
       } catch (err) {
-        console.log(err)
+        console.log(err);
       }
 
       let isFollowed = await userFollowModal.findOne({
@@ -2486,5 +2499,5 @@ module.exports = {
   getVoilatedQuestion: getVoilatedQuestion,
   approveAndRejectQuestion: approveAndRejectQuestion,
   ViewAllMyQuestionList: ViewAllMyQuestionList,
-  viewAllMyDraftQuestion:viewAllMyDraftQuestion
+  viewAllMyDraftQuestion: viewAllMyDraftQuestion,
 };
