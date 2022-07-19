@@ -2,12 +2,6 @@
 let sequelize_mysql = require("../helpers/sequelize-mysql");
 let Sequelize = require("sequelize");
 
-// stateID
-// countryID
-// stateName
-// stateRemarks?
-// stateStatus
-
 const StateModal = sequelize_mysql.define(
   "state",
   {

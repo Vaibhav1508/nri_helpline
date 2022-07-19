@@ -1245,6 +1245,32 @@ const viewAllMyDraftQuestion = (req, res, next) => {
     .catch(next);
 };
 
+const myBookmarkQuestion = (req, res, next) => {
+  return questionManager
+    .myBookmarkQuestion(req.body)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+const reportQuestion = (req, res, next) => {
+  return questionManager
+    .reportQuestion(req.body)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
 module.exports = {
   CreateQuestion: CreateQuestion,
   QuestionList: QuestionList,
@@ -1268,4 +1294,6 @@ module.exports = {
   approveAndRejectQuestion: approveAndRejectQuestion,
   ViewAllMyQuestionList: ViewAllMyQuestionList,
   viewAllMyDraftQuestion,
+  myBookmarkQuestion,
+  reportQuestion,
 };

@@ -32,5 +32,7 @@ router.post("/viewallquestionslist", controller.ViewAllMyQuestionList);
 router.post("/viewalldraftquestionslist", controller.viewAllMyDraftQuestion);
 router.post("/voilatedquestionslist", controller.getVoilatedQuestions);
 router.post("/approveandrejectquestion", controller.approveAndRejectQuestion);
+router.post("/mybookmarklist", controller.myBookmarkQuestion);
+router.post("/reportquestion", controller.reportQuestion);
 
 module.exports = router;

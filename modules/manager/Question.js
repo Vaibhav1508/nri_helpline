@@ -27,6 +27,7 @@ const { voilatedKeywords } = require("../helpers/voilatedKeywords");
 const UservocationModel = require("../models/User_vocations");
 const UserSubVocationModel = require("../models/User_subvocations");
 const userFollowModal = require("../models/UserFollowID");
+const ReportModal = require("../models/Report");
 
 let generateAuthToken = async (phone) => {
   return uuidv4();
@@ -2491,6 +2492,228 @@ const viewAllMyDraftQuestion = async (body) => {
   }
 };
 
+const myBookmarkQuestion = async (body) => {
+  let findData = {
+    userID: body.userID,
+  };
+
+  let allBookMarkQuestion = await QuestionsBookmarkModel.findAll({
+    where: findData,
+    raw: true,
+  });
+
+  let allQuestion = await QuestionModel.findAll({
+    where: {
+      queID: allBookMarkQuestion.map((item) => item.queID),
+      queMode: "Published",
+      queStatus: "Active",
+    },
+    order: [["queCreatedDate", "DESC"]],
+    raw: true,
+  });
+
+  for (let i = 0; i < allQuestion.length; i++) {
+    if (allQuestion[i].queType == "Post") {
+      let queImages = await QuestionImagesModel.findAll({
+        where: { queID: allQuestion[i].queID },
+      });
+
+      let img = [];
+      for (let i = 0; i < queImages.length; i++) {
+        img.push(
+          config.upload_folder +
+            config.upload_entities.post_image_folder +
+            queImages[i].image
+        );
+      }
+      allQuestion[i].queImages = img;
+    }
+
+    let bookmarked = await QuestionsBookmarkModel.count({
+      where: { queID: allQuestion[i].queID, userID: body.userID },
+      raw: true,
+    });
+
+    allQuestion[i].isBookMarked = bookmarked == 1 ? true : false;
+
+    let liked = await QuestionLikeModel.count({
+      where: { queID: allQuestion[i].queID, userID: body.userID },
+      raw: true,
+    });
+
+    allQuestion[i].isLiked = liked == 1 ? true : false;
+
+    let unliked = await QuestionUnlikeModel.count({
+      where: { queID: allQuestion[i].queID, userID: body.userID },
+      raw: true,
+    });
+
+    allQuestion[i].isUnliked = unliked == 1 ? true : false;
+
+    allQuestion[i].queTotalAnswerCount = await QuestionsAnswerModel.count({
+      where: { queID: allQuestion[i].queID },
+      raw: true,
+    });
+
+    allQuestion[i].queTotalLikeCount = await QuestionLikeModel.count({
+      where: { queID: allQuestion[i].queID },
+      raw: true,
+    });
+
+    allQuestion[i].queTotalDislikeCount = await QuestionUnlikeModel.count({
+      where: { queID: allQuestion[i].queID },
+      raw: true,
+    });
+
+    allQuestion[i].queTotalBookmarkCount = await QuestionsBookmarkModel.count({
+      where: { queID: allQuestion[i].queID },
+      raw: true,
+    });
+
+    allQuestion[i].queTotalCommentCount = await QuestionsCommentModel.count({
+      where: { queID: allQuestion[i].queID },
+      raw: true,
+    });
+
+    let user = await UsersModal.findOne({
+      where: { userID: allQuestion[i].userID },
+      attributes: ["userFirstName", "userLastName", "userProfilePicture"],
+      raw: true,
+    });
+
+    user.userProfilePicture = user?.userProfilePicture
+      ? config.upload_folder +
+        config.upload_entities.user_profile_image_folder +
+        user.userProfilePicture
+      : config.upload_folder +
+        config.upload_entities.user_profile_image_folder +
+        "profile_bg.png";
+    allQuestion[i].user = user;
+
+    allQuestion[i].comments = await QuestionsCommentModel.findAll({
+      where: { queID: allQuestion[i].queID },
+      raw: true,
+    });
+
+    for (let j = 0; j < allQuestion[i].comments?.length; j++) {
+      allQuestion[i].comments[j].user = await UsersModal.findOne({
+        where: { userID: allQuestion[i].comments[j]?.userID },
+        attributes: ["userFirstName", "userLastName", "userProfilePicture"],
+        raw: true,
+      });
+
+      // Comment Like count will be done here
+      allQuestion[i].comments[j].commentsLikeCount =
+        await QuestionsCommentLikeModel.count({
+          where: { queCommentID: allQuestion[i].comments[j]?.queCommentID },
+          raw: true,
+        });
+
+      // Comment Dislikes count will be done here
+      allQuestion[i].comments[j].commentsUnlikeCount =
+        await QuestionsCommentUnlikeModel.count({
+          where: { queCommentID: allQuestion[i].comments[j]?.queCommentID },
+          raw: true,
+        });
+    }
+
+    allQuestion[i].answer = await QuestionsAnswerModal.findAll({
+      where: { queID: allQuestion[i].queID },
+      raw: true,
+    });
+
+    for (let j = 0; j < allQuestion[i].answer?.length; j++) {
+      allQuestion[i].answer[j].user = await UsersModal.findOne({
+        where: { userID: allQuestion[i].answer[j]?.userID },
+        attributes: ["userFirstName", "userLastName", "userProfilePicture"],
+        raw: true,
+      });
+
+      // for(let i=0; i<allQuestion[i].answer[j].user.length; i++) {
+      //   allQuestion[i].answer[j].user[i].images = await QuestionImagesModel.findAll({
+      //     where : {  }
+      //   })
+      // }
+
+      try {
+        allQuestion[i].answer[j].answersreply =
+          await QuestionsAnswersReplyModal.findOne({
+            where: { answerID: allQuestion[i].answer[j]?.answerID },
+            raw: true,
+          });
+
+        for (
+          let k = 0;
+          k < allQuestion[i].answer[j]?.answersreply?.length;
+          j++
+        ) {
+          allQuestion[i].answer[j].answersreply[k].user =
+            await UsersModal.findOne({
+              where: {
+                userID: allQuestion[i].answer[j].answersreply[k]?.userID,
+              },
+              attributes: [
+                "userFirstName",
+                "userLastName",
+                "userProfilePicture",
+              ],
+              raw: true,
+            });
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    }
+  }
+  let allQuestionCount = await QuestionModel.count({
+    where: { queID: allBookMarkQuestion.map((item) => item.queID) },
+    order: [["queID", "DESC"]],
+    raw: true,
+  });
+
+  let _result = { total_count: 0 };
+  _result.slides = allQuestion;
+  _result.total_count = allQuestionCount;
+  return _result;
+};
+
+const reportQuestion = async (body) => {
+  let question = await QuestionModel.findOne({
+    where: { queID: body.queID },
+    raw: true,
+  });
+
+  if (question) {
+    // check if user already reported this question
+    let isReported = await ReportModal.count({
+      where: { queID: body.queID, userID: body.userID },
+    });
+
+    if (isReported == 0) {
+      let report = await ReportModal.create({
+        queID: body.queID,
+        userID: body.userID,
+        reasonID: 1,
+        questatus: "Active",
+      });
+
+      if (report) {
+        return {
+          status: true,
+        };
+      }
+    } else {
+      return {
+        status: false,
+        message: "You have already reported this question",
+      };
+    }
+  }
+  return {
+    status: false,
+  };
+};
+
 module.exports = {
   CreateQuestion: CreateQuestion,
   QuestionList: QuestionList,
@@ -2514,4 +2737,6 @@ module.exports = {
   approveAndRejectQuestion: approveAndRejectQuestion,
   ViewAllMyQuestionList: ViewAllMyQuestionList,
   viewAllMyDraftQuestion: viewAllMyDraftQuestion,
+  myBookmarkQuestion,
+  reportQuestion,
 };
