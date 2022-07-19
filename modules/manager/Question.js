@@ -1723,7 +1723,12 @@ let ViewAllMyQuestionList = async (body) => {
   let limit = body.limit ? parseInt(body.limit) : 10;
   let page = body.page || 1;
   let offset = (page - 1) * limit;
-  let findData = { queStatus: "Active", queMode: "Published" };
+  let findData = {
+    queStatus: "Active",
+    queMode: "Published",
+    queType: "Question",
+    userID: body.userID,
+  };
   if (body.filters) {
     if (body.filters.searchtext) {
       findData["$and"] = [
@@ -2101,10 +2106,11 @@ let ViewAllMyQuestionList = async (body) => {
 };
 
 const viewAllMyDraftQuestion = async (body) => {
+  console.log(body);
   let limit = body.limit ? parseInt(body.limit) : 10;
   let page = body.page || 1;
   let offset = (page - 1) * limit;
-  let findData = { queStatus: "Active", queMode: "Draft" };
+  let findData = { queStatus: "Active", queMode: "Draft", userID: body.userID };
   if (body.filters) {
     if (body.filters.searchtext) {
       findData["$and"] = [
