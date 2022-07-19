@@ -144,7 +144,10 @@ let QuestionList = async (body) => {
     let limit = body.limit ? parseInt(body.limit) : 10;
     let page = body.page || 1;
     let offset = (page - 1) * limit;
-    let findData = { queStatus: "Active", queMode: "Published" };
+    let findData = {
+      queStatus: "Active",
+      queMode: "Published",
+    };
     if (body.filters) {
       if (body.filters.searchtext) {
         findData["$and"] = [
@@ -798,7 +801,12 @@ let MyQuestionList = async (body) => {
   let limit = body.limit ? parseInt(body.limit) : 10;
   let page = body.page || 1;
   let offset = (page - 1) * limit;
-  let findData = { queStatus: "Active", userID: body.userID };
+  let findData = {
+    queStatus: "Active",
+    userID: body.userID,
+    queType: "Question",
+    queMode: "Published",
+  };
 
   if (body.filters) {
     if (body.filters.searchtext) {
@@ -1143,6 +1151,7 @@ let MyQuestionList = async (body) => {
       }
     }
     let allQuestionCount = await QuestionModel.count({
+      where: findData,
       order: [["queID", "DESC"]],
       raw: true,
     });
@@ -1727,7 +1736,6 @@ let ViewAllMyQuestionList = async (body) => {
     queStatus: "Active",
     queMode: "Published",
     queType: "Question",
-    userID: body.userID,
   };
   if (body.filters) {
     if (body.filters.searchtext) {
