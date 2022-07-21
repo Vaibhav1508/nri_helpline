@@ -23,13 +23,17 @@ const ReportModal = sequelize_mysql.define(
     reasonID: {
       type: Sequelize.INTEGER,
     },
+    description: {
+      type: Sequelize.STRING,
+      defaultValue: "",
+    },
     createdAt: {
       type: Sequelize.DATE,
-      defaultValue: Sequelize.fn("NOW"),
+      defaultValue: () => new Date(),
     },
     updatedAt: {
       type: Sequelize.DATE,
-      defaultValue: Sequelize.fn("NOW"),
+      defaultValue: () => new Date(),
     },
   },
   {

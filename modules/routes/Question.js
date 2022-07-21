@@ -34,5 +34,6 @@ router.post("/voilatedquestionslist", controller.getVoilatedQuestions);
 router.post("/approveandrejectquestion", controller.approveAndRejectQuestion);
 router.post("/mybookmarklist", controller.myBookmarkQuestion);
 router.post("/reportquestion", controller.reportQuestion);
+router.post("/getquestion", controller.getSharedQuestion);
 
 module.exports = router;

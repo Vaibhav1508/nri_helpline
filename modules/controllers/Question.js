@@ -1271,6 +1271,19 @@ const reportQuestion = (req, res, next) => {
     .catch(next);
 };
 
+const getSharedQuestion = (req, res, next) => {
+  return questionManager
+    .getSharedQuestion(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
 module.exports = {
   CreateQuestion: CreateQuestion,
   QuestionList: QuestionList,
@@ -1296,4 +1309,5 @@ module.exports = {
   viewAllMyDraftQuestion,
   myBookmarkQuestion,
   reportQuestion,
+  getSharedQuestion,
 };
