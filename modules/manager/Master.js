@@ -681,7 +681,7 @@ let CreateReasons = async (body) => {
   if (helper.undefinedOrNull(body)) {
     throw new BadRequestError("Request body comes empty");
   }
-  ["reasonName"].forEach((x) => {
+  ["reasonName", "reasonDescription"].forEach((x) => {
     if (!body[x]) {
       throw new BadRequestError(x + " is required");
     }
@@ -699,6 +699,7 @@ let CreateReasons = async (body) => {
   let reasonStatus = body.reasonStatus == 1 ? "Active" : "Inactive";
   let reasonsData = {
     reasonName: body.reasonName,
+    reasonDescription: body.reasonDescription,
     reasonStatus: reasonStatus,
   };
   await ReasonsModel.create(reasonsData);
@@ -738,13 +739,13 @@ let ReasonsUpdate = async (req) => {
   if (helper.undefinedOrNull(body)) {
     throw new BadRequestError("body_empty");
   }
-  ["reasonName"].forEach((x) => {
+  ["reasonName", "reasonDescription"].forEach((x) => {
     if (!body[x]) {
       throw new BadRequestError(x + " is required");
     }
   });
   let updateData = {};
-  let optionalFiled = ["reasonName", "reasonStatus"];
+  let optionalFiled = ["reasonName", "reasonStatus", "reasonDescription"];
   optionalFiled.forEach((x) => {
     if (body[x]) {
       updateData[x] = body[x];
