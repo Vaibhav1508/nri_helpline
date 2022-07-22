@@ -1599,14 +1599,40 @@ let getVoilatedQuestion = async (req) => {
     let offset = (page - 1) * limit;
     let findData = { queStatus: "Voilated" };
 
+    // get voilated questionid
+    let voilatedQuestionID = await QuestionModel.findAll({
+      where: findData,
+      attributes: ["queID"],
+      raw: true,
+    });
+
+    let reportedQuestionID = await ReportModal.findAll({
+      where: { questatus: "Active" },
+      attributes: ["queID"],
+      raw: true,
+    });
+
+    let questionID = [];
+    for (let i = 0; i < voilatedQuestionID.length; i++) {
+      questionID.push(voilatedQuestionID[i].queID);
+    }
+
+    for (let i = 0; i < reportedQuestionID.length; i++) {
+      questionID.push(reportedQuestionID[i].queID);
+    }
+
     if (body.page || body.limit) {
       let allQuestion = await QuestionModel.findAll({
-        where: findData,
+        where: { queID: questionID },
         limit,
         offset,
         order: [["queID", "DESC"]],
         raw: true,
       });
+
+      // get reported question
+
+      // add reported question to all question
 
       for (let i = 0; i < allQuestion.length; i++) {
         // allQuestion[i].user = await
@@ -1629,7 +1655,7 @@ let getVoilatedQuestion = async (req) => {
       return _result;
     } else {
       let allQuestion = await QuestionModel.findAll({
-        where: findData,
+        where: { queID: questionID },
         order: [["queID", "DESC"]],
         raw: true,
       });
@@ -1668,6 +1694,33 @@ let approveAndRejectQuestion = async (req) => {
   });
 
   if (body.queID.length > 1) {
+    // check if all question in report table
+    let reportedQuestion = await QuestionModel.findAll({
+      where: { queID: body.queID },
+      raw: true,
+    });
+
+    if (reportedQuestion.length) {
+      // change question status to inactive
+
+      if (body.queStatus === "Active") {
+        // remove from report table
+        await ReportModal.destroy({
+          where: { queID: body.queID },
+          raw: true,
+        });
+      } else {
+        await ReportModal.update(
+          {
+            questatus: body.queStatus,
+          },
+          {
+            where: { queID: body.queID },
+          }
+        );
+      }
+    }
+
     // update multiple question
     await QuestionModel.update(
       { queStatus: body.queStatus },
@@ -1686,6 +1739,28 @@ let approveAndRejectQuestion = async (req) => {
       throw new BadRequestError("You can not active this question");
     }
 
+    // check if question is available in report table
+    let reportQuestion = await ReportModal.findOne({
+      where: { queID: body.queID, questatus: "Active" },
+      raw: true,
+    });
+
+    if (reportQuestion) {
+      if (body.queStatus === "Active") {
+        await ReportModal.destroy({
+          where: { queID: body.queID },
+          raw: true,
+        });
+      } else {
+        await ReportModal.update(
+          { questatus: body.queStatus },
+          {
+            where: { queID: body.queID },
+            raw: true,
+          }
+        );
+      }
+    }
     await QuestionModel.update(
       { queStatus: body.queStatus },
       {
