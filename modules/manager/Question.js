@@ -16,6 +16,8 @@ let helper = require("../helpers/helpers"),
   QuestionsCommentLikeModel = require("../models/QuestionsCommentLike"),
   QuestionsCommentUnlikeModel = require("../models/QuestionsCommentUnlike"),
   QuestionImagesModel = require("../models/QuestionImages"),
+  AnswerReplyLikeModel = require("../models/AnswerReplyLike"),
+  AnswerReplyUnlikeModel = require("../models/AnswerReplyUnlike"),
   BadRequestError = require("../errors/badRequestError");
 const { v4: uuidv4 } = require("uuid");
 const QuestionsAnswersReplyModal = require("../models/QuestionsAnswersReply");
@@ -40,13 +42,13 @@ let CreateQuestion = async (req) => {
   // }
   // return true if question contains any of the voilatedKeywords
 
-  ["queDescription", "queType", "queMode", "vocationID"].forEach((x) => {
+  ["queQuestion","queDescription", "queType", "queMode", "vocationID"].forEach((x) => {
     if (!body[x]) {
       throw new BadRequestError(x + " is required");
     }
   });
 
-  try {
+
     let question = await QuestionModel.findOne({
       where: { queQuestion: body.queQuestion ? body.queQuestion : "" },
       raw: true,
@@ -135,20 +137,18 @@ let CreateQuestion = async (req) => {
     };
     req.io.emit("realTimeFeed", realTimeFeed);
     return { slides: questionDetail };
-  } catch (err) {
-    console.log(err);
-  }
-};
+  } 
+
+
+
+
 
 let QuestionList = async (body) => {
   try {
     let limit = body.limit ? parseInt(body.limit) : 10;
     let page = body.page || 1;
     let offset = (page - 1) * limit;
-    let findData = {
-      queStatus: "Active",
-      queMode: "Published",
-    };
+    let findData = { queStatus: "Active", queMode: "Published" };
     if (body.filters) {
       if (body.filters.searchtext) {
         findData["$and"] = [
@@ -518,40 +518,38 @@ let QuestionList = async (body) => {
         });
 
         for (let j = 0; j < allQuestion[i].answer?.length; j++) {
+
           let liked = await QuestionsAnswerLikeModel.count({
-            where: {
-              answerID: allQuestion[i].answer[j]?.answerID,
-              userID: body.userID,
-            },
+            where: { answerID: allQuestion[i].answer[j]?.answerID, userID: body.userID },
             raw: true,
           });
-
+  
           allQuestion[i].answer[j].isLiked = liked == 1 ? true : false;
-
+  
           let unliked = await QuestionsAnswerUnlikeModel.count({
-            where: {
-              answerID: allQuestion[i].answer[j]?.answerID,
-              userID: body.userID,
-            },
+            where: { answerID: allQuestion[i].answer[j]?.answerID, userID: body.userID },
             raw: true,
           });
-
+  
           allQuestion[i].answer[j].isUnliked = unliked == 1 ? true : false;
 
-          if (allQuestion[i].answer.length) {
+          if(allQuestion[i].answer.length){
+
             // Comment Like count will be done here
             allQuestion[i].answer[j].totalAnswerLikeCount =
-              await QuestionsAnswerLikeModel.count({
-                where: { answerID: allQuestion[i].answer[j]?.answerID },
-                raw: true,
-              });
+            await QuestionsAnswerLikeModel.count({
+              where: { answerID: allQuestion[i].answer[j]?.answerID },
+              raw: true,
+            });
 
             // Comment Dislikes count will be done here
             allQuestion[i].answer[j].totalAnswerUnlikeCount =
-              await QuestionsAnswerUnlikeModel.count({
-                where: { answerID: allQuestion[i].answer[j]?.answerID },
-                raw: true,
-              });
+            await QuestionsAnswerUnlikeModel.count({
+              where: { answerID: allQuestion[i].answer[j]?.answerID },
+              raw: true,
+            });
+
+
           }
 
           let user = await UsersModal.findOne({
@@ -560,13 +558,13 @@ let QuestionList = async (body) => {
             raw: true,
           });
           user.userProfilePicture = user.userProfilePicture
-            ? config.upload_folder +
-              config.upload_entities.user_profile_image_folder +
-              user.userProfilePicture
-            : config.upload_folder +
-              config.upload_entities.user_profile_image_folder +
-              "profile_bg.png";
-          allQuestion[i].answer[j].user = user;
+          ? config.upload_folder +
+            config.upload_entities.user_profile_image_folder +
+            user.userProfilePicture
+          : config.upload_folder +
+            config.upload_entities.user_profile_image_folder +
+            "profile_bg.png";
+          allQuestion[i].answer[j].user = user
 
           let isFollowed = await userFollowModal.findOne({
             where: {
@@ -575,7 +573,7 @@ let QuestionList = async (body) => {
             },
             raw: true,
           });
-
+  
           if (isFollowed) {
             allQuestion[i].answer[j].isFollow = true;
           }
@@ -595,19 +593,20 @@ let QuestionList = async (body) => {
               k < allQuestion[i].answer[j]?.answersreply?.length;
               k++
             ) {
-              let user = await UsersModal.findOne({
-                where: {
-                  userID: allQuestion[i].answer[j].answersreply[k]?.userID,
-                },
-                attributes: [
-                  "userFirstName",
-                  "userLastName",
-                  "userProfilePicture",
-                ],
-                raw: true,
-              });
+              let user =
+                await UsersModal.findOne({
+                  where: {
+                    userID: allQuestion[i].answer[j].answersreply[k]?.userID,
+                  },
+                  attributes: [
+                    "userFirstName",
+                    "userLastName",
+                    "userProfilePicture",
+                  ],
+                  raw: true,
+                });
 
-              user.userProfilePicture = user.userProfilePicture
+                user.userProfilePicture = user.userProfilePicture
                 ? config.upload_folder +
                   config.upload_entities.user_profile_image_folder +
                   user.userProfilePicture
@@ -615,32 +614,59 @@ let QuestionList = async (body) => {
                   config.upload_entities.user_profile_image_folder +
                   "profile_bg.png";
 
-              allQuestion[i].answer[j].answersreply[k].user = user;
+                allQuestion[i].answer[j].answersreply[k].user = user
 
-              let isFollowed = await userFollowModal.findOne({
-                where: {
-                  userfollowUserID:
-                    allQuestion[i].answer[j].answersreply[k].userID,
-                  userID: body.userID,
-                },
-                raw: true,
-              });
+                let isFollowed = await userFollowModal.findOne({
+                  where: {
+                    userfollowUserID: allQuestion[i].answer[j].answersreply[k].userID,
+                    userID: body.userID,
+                  },
+                  raw: true,
+                });
+        
+                if (isFollowed) {
+                  allQuestion[i].answer[j].answersreply[k].isFollow = true;
+                }
+                if (!isFollowed) {
+                  allQuestion[i].answer[j].answersreply[k].isFollow = false;
+                }
+                allQuestion[i].answer[j].answersreply[k].userID == body.userID ? allQuestion[i].answer[j].isAlreadyRepliedAnswer = true : allQuestion[i].answer[j].isAlreadyRepliedAnswer = false;
 
-              if (isFollowed) {
-                allQuestion[i].answer[j].answersreply[k].isFollow = true;
-              }
-              if (!isFollowed) {
-                allQuestion[i].answer[j].answersreply[k].isFollow = false;
-              }
-              allQuestion[i].answer[j].answersreply[k].userID == body.userID
-                ? (allQuestion[i].answer[j].isAlreadyRepliedAnswer = true)
-                : (allQuestion[i].answer[j].isAlreadyRepliedAnswer = false);
+                
+                let liked = await AnswerReplyLikeModel.count({
+                  where: { replyID: allQuestion[i].answer[j]?.answersreply[k]?.replyID, userID: body.userID },
+                  raw: true,
+                });
+        
+                allQuestion[i].answer[j].answersreply[k].isLiked = liked == 1 ? true : false;
+        
+                let unliked = await AnswerReplyUnlikeModel.count({
+                  where: { replyID: allQuestion[i].answer[j]?.answersreply[k]?.replyID, userID: body.userID },
+                  raw: true,
+                });
+        
+                allQuestion[i].answer[j].answersreply[k].isUnliked = unliked == 1 ? true : false;
+
+                // Answer reply like count
+                allQuestion[i].answer[j].answersreply[k].totalAnswerLikeCount =
+                await AnswerReplyLikeModel.count({
+                  where: { replyID: allQuestion[i].answer[j]?.answersreply[k]?.replyID },
+                  raw: true,
+                });
+    
+                // Comment Dislikes count will be done here
+                allQuestion[i].answer[j].answersreply[k].totalAnswerUnlikeCount =
+                await AnswerReplyUnlikeModel.count({
+                  where: { replyID: allQuestion[i].answer[j]?.answersreply[k]?.replyID },
+                  raw: true,
+                });
+
+                // allQuestion[i].answer[j].answersreply[k].totalAnswerLikeCount = allQuestion[i].answer[j].answersreply[k].totalAnswerLikeCount ? allQuestion[i].answer[j].answersreply[k].totalAnswerLikeCount : 0;
+
+                // allQuestion[i].answer[j].answersreply[k].totalAnswerUnlikeCount = allQuestion[i].answer[j].answersreply[k].totalAnswerUnlikeCount ? allQuestion[i].answer[j].answersreply[k].totalAnswerUnlikeCount : 0;
+
             }
-            allQuestion[i].answer[j].answersreply
-              .map((x) => x.userID)
-              .includes(body.userID)
-              ? (allQuestion[i].answer[j].isAlreadyRepliedAnswer = true)
-              : (allQuestion[i].answer[j].isAlreadyRepliedAnswer = false);
+            allQuestion[i].answer[j].answersreply.map(x => x.userID).includes(body.userID) ? allQuestion[i].answer[j].isAlreadyRepliedAnswer = true : allQuestion[i].answer[j].isAlreadyRepliedAnswer = false;
           } catch (err) {
             console.log(err);
           }
@@ -1316,16 +1342,20 @@ let QuestionsAnswerLike = async (req) => {
     }
   });
 
-  let questionAnswerUnlike = await QuestionsAnswerUnlikeModel.findAll({
-    where: { answerID: body.answerID, userID: body.userID },
-    raw: true,
-  });
 
-  if (questionAnswerUnlike) {
-    await QuestionsAnswerUnlikeModel.destroy({
+  try{
+    let questionAnswerUnlike = await QuestionsAnswerUnlikeModel.findAll({
       where: { answerID: body.answerID, userID: body.userID },
       raw: true,
     });
+    if (questionAnswerUnlike) {
+      await QuestionsAnswerUnlikeModel.destroy({
+        where: { answerID: body.answerID, userID: body.userID },
+        raw: true,
+      });
+    }
+  }catch (err) {
+    console.log(err)
   }
 
   let questionAnswerAlreadyLike = await QuestionsAnswerLikeModel.findAll({
@@ -1370,22 +1400,26 @@ let QuestionsAnswerUnlike = async (req) => {
     });
   }
 
-  let questionAnswerAlreadyUnlike = await QuestionsAnswerUnlikeModel.findOne({
-    where: { answerID: body.answerID, userID: body.userID },
-    raw: true,
-  });
-
-  if (questionAnswerAlreadyUnlike) {
-    return { unliked: true };
-  } else {
-    let questionAnswerUnlikeData = {
-      answerID: body.answerID,
-      userID: body.userID,
-    };
-
-    await QuestionsAnswerUnlikeModel.create(questionAnswerUnlikeData);
-
-    return { unliked: true };
+  try {
+    let questionAnswerAlreadyUnlike = await QuestionsAnswerUnlikeModel.findOne({
+      where: { answerID: body.answerID, userID: body.userID },
+      raw: true,
+    });
+  
+    if (questionAnswerAlreadyUnlike) {
+      return { unliked: true };
+    } else {
+      let questionAnswerUnlikeData = {
+        answerID: body.answerID,
+        userID: body.userID,
+      };
+  
+      await QuestionsAnswerUnlikeModel.create(questionAnswerUnlikeData);
+  
+      return { unliked: true };
+    }
+  } catch(err) {
+    console.log(err)
   }
 };
 
@@ -2159,11 +2193,10 @@ let ViewAllMyQuestionList = async (body) => {
 };
 
 const viewAllMyDraftQuestion = async (body) => {
-  console.log(body);
   let limit = body.limit ? parseInt(body.limit) : 10;
   let page = body.page || 1;
   let offset = (page - 1) * limit;
-  let findData = { queStatus: "Active", queMode: "Draft", userID: body.userID };
+  let findData = { queStatus: "Active", queMode: "Draft", userID: body.userID, queType: "Question" };
   if (body.filters) {
     if (body.filters.searchtext) {
       findData["$and"] = [
@@ -2733,26 +2766,30 @@ const reportQuestion = async (body) => {
       where: { queID: body.queID, userID: body.userID },
     });
 
-    if (isReported == 0) {
-      let report = await ReportModal.create({
-        queID: body.queID,
-        userID: body.userID,
-        reasonID: body.reasonID,
-        description: body.description,
-        questatus: "Active",
-      });
-
-      if (report) {
+    try {
+      if (isReported == 0) {
+        let report = await ReportModal.create({
+          queID: body.queID,
+          userID: body.userID,
+          reasonID: 1,
+          questatus: "Active",
+        });
+  
+        if (report) {
+          return {
+            status: true,
+          };
+        }
+      } else {
         return {
-          status: true,
+          status: false,
+          message: "You have already reported this question",
         };
       }
-    } else {
-      return {
-        status: false,
-        message: "You have already reported this question",
-      };
+    } catch (err) {
+      console.log(err)
     }
+    
   }
   return {
     status: false,
@@ -2939,6 +2976,133 @@ const getSharedQuestion = async (req) => {
   }
 };
 
+let AnswerReplyLike = async (req) => {
+  let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+  if (helper.undefinedOrNull(body)) {
+    throw new BadRequestError("Request body comes empty");
+  }
+  ["replyID", "userID"].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
+  });
+
+  try{
+    let AnswerReplyUnlike = await AnswerReplyUnlikeModel.findAll({
+      where: { replyID: body.replyID, userID: body.userID },
+      raw: true,
+    });
+    if (AnswerReplyUnlike) {
+      await AnswerReplyUnlikeModel.destroy({
+        where: { replyID: body.replyID, userID: body.userID },
+        raw: true,
+      });
+    }
+  }catch (err) {
+    console.log(err)
+  }
+
+  let AnswerReplyAlreadyLike = await AnswerReplyLikeModel.findAll({
+    where: { replyID: body.replyID, userID: body.userID },
+    raw: true,
+  });
+
+  if (AnswerReplyAlreadyLike.length) {
+    return { answerrepliyliked: true };
+  } else {
+    let AnswerReplyAlreadyLike = {
+      replyID: body.replyID,
+      userID: body.userID,
+    };
+
+    await AnswerReplyLikeModel.create(AnswerReplyAlreadyLike);
+
+    return { answerrepliyliked: true };
+  }
+};
+
+let AnswerReplyUnlike = async (req) => {
+  let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+  if (helper.undefinedOrNull(body)) {
+    throw new BadRequestError("Request body comes empty");
+  }
+  ["replyID", "userID"].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
+  });
+
+  let AnswerReplyLike = await AnswerReplyLikeModel.findOne({
+    where: { replyID: body.replyID, userID: body.userID },
+    raw: true,
+  });
+
+  if (AnswerReplyLike) {
+    await AnswerReplyLikeModel.destroy({
+      where: { replyID: body.replyID, userID: body.userID },
+      raw: true,
+    });
+  }
+
+  try {
+    let AnswerReplyAlreadyUnlike = await AnswerReplyUnlikeModel.findOne({
+      where: { replyID: body.replyID, userID: body.userID },
+      raw: true,
+    });
+  
+    if (AnswerReplyAlreadyUnlike) {
+      return { answerreplyunliked: true };
+    } else {
+      let AnswerReplyUnlikeData = {
+        replyID: body.replyID,
+        userID: body.userID,
+      };
+  
+      await AnswerReplyUnlikeModel.create(AnswerReplyUnlikeData);
+  
+      return { answerreplyunliked: true };
+    }
+  } catch(err) {
+    console.log(err)
+  }
+};
+
+let AnswerUpdate = async (req) => {
+  let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+  if (helper.undefinedOrNull(body)) {
+    throw new BadRequestError("Request body comes empty");
+  }
+  ["answerID","queID", "userID", "answerAnswer"].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
+  });
+
+  let question = await QuestionsAnswerModel.findOne({
+    where: { queID: body.queID,  userID: body.userID, answerID: body.answerID},
+    raw: true,
+  });
+
+  if(!question) {
+    throw new BadRequestError("Answer doesn't exist!");
+  }
+
+  // if(questionLike) {
+  //   await QuestionLikeModel
+  //   .destroy({ where: {queID : body.queID , userID: body.userID}, raw: true });
+  // }
+
+  let questionsAnswerData = {
+    queID: body.queID,
+    userID: body.userID,
+    answerAnswer: body.answerAnswer,
+  };
+
+  let answerData = await QuestionsAnswerModel.update(questionsAnswerData, {where : {answerID  : body.answerID }});
+
+  return { slides: answerData };
+};
+
 module.exports = {
   CreateQuestion: CreateQuestion,
   QuestionList: QuestionList,
@@ -2965,4 +3129,7 @@ module.exports = {
   myBookmarkQuestion,
   reportQuestion,
   getSharedQuestion,
+  AnswerReplyLike,
+  AnswerReplyUnlike,
+  AnswerUpdate
 };

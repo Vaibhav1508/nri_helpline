@@ -1284,6 +1284,45 @@ const getSharedQuestion = (req, res, next) => {
     .catch(next);
 };
 
+let AnswerReplyLike = (req, res, next) => {
+  return questionManager
+    .AnswerReplyLike(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+let AnswerReplyUnlike = (req, res, next) => {
+  return questionManager
+    .AnswerReplyUnlike(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+let AnswerUpdate = (req, res, next) => {
+  return questionManager
+    .AnswerUpdate(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
 module.exports = {
   CreateQuestion: CreateQuestion,
   QuestionList: QuestionList,
@@ -1310,4 +1349,7 @@ module.exports = {
   myBookmarkQuestion,
   reportQuestion,
   getSharedQuestion,
+  AnswerReplyLike,
+  AnswerReplyUnlike,
+  AnswerUpdate
 };

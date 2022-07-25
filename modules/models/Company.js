@@ -84,10 +84,6 @@ const CompanyModal = sequelize_mysql.define(
       type: Sequelize.STRING,
       defaultValue: "",
     },
-    companyOperatingHours: {
-      type: Sequelize.INTEGER,
-      defaultValue: null,
-    },
   },
   {
     tableName: "company",
