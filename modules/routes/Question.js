@@ -38,5 +38,6 @@ router.post("/getquestion", controller.getSharedQuestion);
 router.post("/answerreplylike", controller.AnswerReplyLike);
 router.post("/answerreplyunlike", controller.AnswerReplyUnlike);
 router.post("/answerupdate", controller.AnswerUpdate);
+router.post("/archiveanswer", controller.archiveAnswer);
 
 module.exports = router;

@@ -1323,6 +1323,19 @@ let AnswerUpdate = (req, res, next) => {
     .catch(next);
 };
 
+const archiveAnswer = (req, res, next) => {
+  return questionManager
+    .archiveAnswer(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
 module.exports = {
   CreateQuestion: CreateQuestion,
   QuestionList: QuestionList,
@@ -1351,5 +1364,6 @@ module.exports = {
   getSharedQuestion,
   AnswerReplyLike,
   AnswerReplyUnlike,
-  AnswerUpdate
+  AnswerUpdate,
+  archiveAnswer,
 };
