@@ -22,4 +22,8 @@ router.put("/vocation-update/:vocationID",helper.uploadVocationImage.single('voc
 router.put("/subvocation-update/:vocationID",helper.uploadSubVocationImage.single('subVocationImage'),controller.SubVocationUpdate);
 router.post("/getsuggetion",controller.GetSuggetion);
 
+router.post("/vocationcreate",helper.uploadVocationImage.single('vocationImage'),controller.VocationCreate);
+router.get("/selectvocationlist",controller.SelectVocationsList);
+router.put("/update-vocation/:vocationID",helper.uploadVocationImage.single('vocationImage'),controller.UpdateVocation);
+
 module.exports = router;

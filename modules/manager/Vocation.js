@@ -6,6 +6,7 @@ let helper = require("../helpers/helpers"),
     md5 = require('md5'),
     config = process.config.global_config,
     VocationModel = require("../models/Vocation"),
+    VocationsModel = require("../models/Vocations"),
     SubVocationModel = require("../models/SubVocation"),
     UserVocationModel = require("../models/User_vocations"),
     BadRequestError = require('../errors/badRequestError');
@@ -189,7 +190,7 @@ let AdminVocationsList = async (body) => {
             }
         }
     if(body.page || body.limit) {
-       let allVocation = await VocationModel.findAll({
+       let allVocation = await VocationsModel.findAll({
             where: findData,
             limit,
             offset,
@@ -199,7 +200,7 @@ let AdminVocationsList = async (body) => {
         for(let i=0 ; i<allVocation.length; i++) {
             allVocation[i].vocationImage = config.upload_folder + config.upload_entities.vocation_image_folder + allVocation[i].vocationImage;
         }
-        let allVocationCount = await VocationModel.count({   
+        let allVocationCount = await VocationsModel.count({   
             where: findData,     
             order: [['vocationID', 'DESC']],
             raw: true
@@ -209,7 +210,7 @@ let AdminVocationsList = async (body) => {
         _result.total_count = allVocationCount;
         return _result;
     }   else {
-        let allVocation = await VocationModel.findAll({
+        let allVocation = await VocationsModel.findAll({
             where: findData,
             order: [['vocationID', 'DESC']],
             raw: true
@@ -217,7 +218,7 @@ let AdminVocationsList = async (body) => {
         for(let i=0 ; i<allVocation.length; i++) {
             allVocation[i].vocationImage = config.upload_folder + config.upload_entities.vocation_image_folder + allVocation[i].vocationImage;
         }
-        let allVocationCount = await VocationModel.count({        
+        let allVocationCount = await VocationsModel.count({        
             order: [['vocationID', 'DESC']],
             raw: true
         });
@@ -344,7 +345,7 @@ let ChangeVocationStatus = async (body) => {
         throw new BadRequestError("Status is required");
     }
 
-    let user = await VocationModel
+    let user = await VocationsModel
         .findOne({ where: {vocationID : body.vocationID}, raw: true });
     if (!user) {
         throw new BadRequestError("invalid_creds");
@@ -356,7 +357,18 @@ let ChangeVocationStatus = async (body) => {
         throw new BadRequestError("Vocation Already inactivated"); 
     }
     let status = body.status == 1 ? 'Active' : 'Inactive'
-    await VocationModel.update({vocationStatus : status}, { where: {vocationID : user.vocationID},  raw: true });
+
+    let vocations = await VocationsModel.findAll({raw : true});
+    let allVocations = vocations.filter(x => x.relatedVocations != null)
+    
+    allVocations.forEach(x => {
+        x.relatedVocations = JSON.parse(x.relatedVocations)
+        if(x.relatedVocations.includes(user.vocationID) && x.vocationStatus == "Inactive") {
+            throw new BadRequestError("Please first Activate parent vocation named '"+ x.vocationName+"'")
+        }
+    })
+    await VocationsModel.update({vocationStatus : status}, { where: {vocationID : user.vocationID},  raw: true });
+    await VocationsModel.update({vocationStatus : status},{ where: {vocationID : JSON.parse(user.relatedVocations)}, raw: true });
     return { status : body.status }    
 }
 
@@ -392,10 +404,15 @@ let VocationDetail = async (req) => {
     if(!req.params.vocationID) {
         throw new BadRequestError("VocationID is required");
     }
-    let vocationData = await VocationModel.findOne({
+    let vocationData = await VocationsModel.findOne({
         where: {vocationID : req.params.vocationID},
         raw: true
     });
+    let relatedVocations = await VocationsModel.findAll({
+        where: {vocationID : JSON.parse(vocationData.relatedVocations)},
+        raw: true
+    });
+    vocationData.relatedVocations = relatedVocations;
     vocationData.vocationImage = config.upload_folder + config.upload_entities.vocation_image_folder + vocationData.vocationImage;
     return {slides : vocationData};
 }
@@ -487,6 +504,140 @@ let GetSuggetion = async (body) => {
     return {slides : subvocationData};
 }
 
+let VocationCreate = async (req) => {
+    let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+    if (helper.undefinedOrNull(body)) {
+        throw new BadRequestError("Request body comes empty");
+    }
+    ['vocationName'].forEach(x => {
+        if (!body[x]) {
+            throw new BadRequestError(x + " is required");
+        }
+    });
+
+    // Check for suggested/ Related vocation's are already available in others vocation list
+
+    let allRelatedSelectedVocations = await VocationsModel.findAll({
+        raw :  true
+    })
+
+    
+    let allVocations = []
+    allRelatedSelectedVocations = allRelatedSelectedVocations.map(x => x.relatedVocations)
+    allRelatedSelectedVocations = allRelatedSelectedVocations.filter(m => m != null)
+    allRelatedSelectedVocations.forEach(x => {
+        x = JSON.parse(x)
+        x.forEach(y => {
+            allVocations.push(y)
+        })
+    })
+    allVocations = [... new Set(allVocations)]
+    body.relatedVocations.forEach(x => {
+        if(allVocations.includes(x)) {
+            throw new BadRequestError("Related vocation is occupied, Please change the suggestions.")
+        }
+    })
+
+
+    let filename = "";
+    try {
+        filename = req.file.filename;
+    }
+    catch (error) {
+    }
+
+    if (!filename) {
+        throw new BadRequestError('Upload Any Image');
+    }
+
+    let vocationStatus = body.vocationStatus == 1 ? 'Active' : 'Inactive';
+    let vocationData = {
+        vocationImage: filename,
+        vocationName: body.vocationName,
+        vocationRemarks: body.vocationRemarks,
+        vocationStatus: vocationStatus,
+        relatedVocations : body.relatedVocations?.length ? body.relatedVocations : null
+    }
+    let vocationDetail = await VocationsModel.create(vocationData);
+    vocationDetail.vocationImage = config.upload_folder + config.upload_entities.sub_vocation_image_folder + vocationDetail.vocationImage;
+
+    return {slides : vocationDetail};
+}
+
+let SelectVocationsList = async () => {
+    let findData = {vocationStatus : 'Active'}
+    let allVocation = await VocationsModel.findAll({
+        where: findData,
+        order: [['vocationID', 'DESC']],
+        raw: true
+    });
+
+    let hasRelatedVocations = allVocation.filter(x => x.relatedVocations != null || x.relatedVocations?.length >= 1).map(y => y.relatedVocations)
+    let hasNotRelatedVocations = allVocation.filter(x => x.relatedVocations == null || !x.relatedVocations?.length) 
+
+    let allHasRelatedVocation = [];
+    hasRelatedVocations.forEach(x => {
+        x = JSON.parse(x)
+        x.forEach(y => {
+            allHasRelatedVocation.push(y)
+        })
+    })
+    allHasRelatedVocation = [... new Set(allHasRelatedVocation)]
+    
+    let availableVocationToSelect = []
+
+    hasNotRelatedVocations.forEach(x => {
+        if(!allHasRelatedVocation.includes(x.vocationID)) {
+            availableVocationToSelect.push(x)
+        }
+    })
+    
+    for(let i=0 ; i<availableVocationToSelect.length; i++) {
+        availableVocationToSelect[i].vocationImage = config.upload_folder + config.upload_entities.vocation_image_folder + availableVocationToSelect[i].vocationImage;
+    }
+    let availableVocationToSelectCount = await VocationsModel.count({        
+        order: [['vocationID', 'DESC']],
+        raw: true
+    });
+    let _result = { total_count: 0 };
+    _result.slides = availableVocationToSelect;
+    _result.total_count = availableVocationToSelectCount;
+    return _result;
+}
+
+let UpdateVocation = async (req) => {
+    let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+    if (helper.undefinedOrNull(body)) {
+        throw new BadRequestError("Request body comes empty");
+    }
+        if (!body.vocationName) {
+            throw new BadRequestError("vocationName is required");
+        }
+
+    let Vocation = await VocationsModel
+        .findOne({ where: {vocationID: req.params.vocationID}, raw: true });
+    
+    if(!Vocation) {
+        throw new BadRequestError("Vocation doesn't exists");
+    }
+
+    let updateData = {};
+    let optionalFiled = ['vocationID', 'vocationName','vocationRemarks','vocationStatus','relatedVocations'];
+    optionalFiled.forEach(x => {
+        if (body[x]) {
+            updateData[x] = body[x];
+        }
+    });
+    if (req.file && req.file.path) {
+        updateData["vocationImage"] = req.file.filename;
+    }
+    await VocationsModel.update(updateData, { where: { vocationID: req.params.vocationID }, raw: true });
+    let  vocationData = await VocationsModel.findOne({where:{vocationID: req.params.vocationID},raw:true});
+        
+    return {slides : vocationData}
+}
+
+
 module.exports = {
     AdminVocationsList:AdminVocationsList,
     AdminSubVocationsList:AdminSubVocationsList,
@@ -501,5 +652,8 @@ module.exports = {
     SubVocationDetail:SubVocationDetail,
     VocationUpdate:VocationUpdate,
     SubVocationUpdate:SubVocationUpdate,
-    GetSuggetion:GetSuggetion
+    GetSuggetion:GetSuggetion,
+    VocationCreate: VocationCreate,
+    SelectVocationsList: SelectVocationsList,
+    UpdateVocation: UpdateVocation
 };

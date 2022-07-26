@@ -1003,6 +1003,236 @@ let SubVocationUpdate = (req, res, next) => {
         })
         .catch(next);
 }
+
+/**
+ * @swagger
+ * /api/v1/vocation/createsubvocation:
+ *   post:
+ *     summary: create sub vocation.
+ *     tags:
+ *      - Vocation
+ *     parameters :
+ *     - name: x-auth-api-key
+ *       in: header   
+ *       description: an authorization header
+ *       required: true
+ *       type: string 
+ *     - name: Accept-Language
+ *       in: header
+ *       description: Language
+ *       required: false
+ *       type: string 
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               vocationID:
+ *                 type: string
+ *                 example: 1
+ *                 paramType: body
+ *               subVocationName:
+ *                 type: string
+ *                 example: aavvcc
+ *                 paramType: body
+ *               subVocationImage:
+ *                 type: file
+ *                 example: ''
+ *               subVocationRemarks:
+ *                 type: string
+ *                 example: aavvcc
+ *                 paramType: body
+ *               subVocationStatus:
+ *                 type: string
+ *                 example: aavvcc
+ *                 paramType: body
+ *     responses:
+ *       200:
+ *         description: user object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: error in request processing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *                   example: 400
+*/
+let VocationCreate = (req, res, next) => {
+    return vocationManager
+        .VocationCreate(req)
+        .then(data => {
+            let result = {
+                status:200,
+                data: data
+            }
+            return res.json(result);
+        })
+        .catch(next);
+}
+
+  /**
+ * @swagger
+ * /api/v1/vocation/vocationslist:
+ *   post:
+ *     summary: vocations List.
+ *     tags:
+ *      - Vocation
+ *     parameters :
+ *     - name: x-auth-api-key
+ *       in: header   
+ *       description: an authorization header
+ *       required: true
+ *       type: string 
+ *     - name: Accept-Language
+ *       in: header   
+ *       description: Language
+ *       required: false
+ *       type: string 
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               page:
+ *                 type: string
+ *                 example: 1
+ *                 paramType: body
+ *               limit:
+ *                 type: string
+ *                 example: 2
+ *                 paramType: body
+ *     responses:
+ *       200:
+ *         description: user object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: error in request processing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *                   example: 400
+*/
+let SelectVocationsList = (req, res, next) => {
+    return vocationManager
+        .SelectVocationsList()
+        .then(data => {
+            let result = {
+                status:200,
+                data: data
+            }
+            return res.json(result);
+        })
+        .catch(next);
+}
+
+ /**
+ * @swagger
+ * /api/v1/Admin/vocation-update/:vocationID:
+ *   put:
+ *     summary: Vocation Update.
+ *     tags:
+ *      - Vocation
+ *     parameters :
+ *     - name: x-auth-api-key
+ *       in: header   
+ *       description: an authorization header
+ *       required: true
+ *       type: string 
+ *     - name: userID
+ *       in: header   
+ *       description: an authorization header
+ *       required: true
+ *       type: string
+ *     - name: Accept-Language
+ *       in: header   
+ *       description: Language
+ *       required: false
+ *       type: string 
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               vocationName:
+ *                 type: string
+ *                 example: aavvcc
+ *                 paramType: body
+ *               vocationImage:
+ *                 type: file
+ *                 example: ''
+ *               vocationRemarks:
+ *                 type: string
+ *                 example: aavvcc
+ *                 paramType: body
+ *               vocationStatus:
+ *                 type: integer
+ *                 example: aavvcc
+ *                 paramType: body
+ *     responses:
+ *       200:
+ *         description: user object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: error in request processing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *                   example: 400
+*/
+let UpdateVocation = (req, res, next) => {
+    return vocationManager
+        .UpdateVocation(req)
+        .then(data => {
+            let result = {
+                status:200,
+                data: data
+            }
+            return res.json(result);
+        })
+        .catch(next);
+}
  
  module.exports = {
     AdminVocationsList:AdminVocationsList,
@@ -1018,5 +1248,8 @@ let SubVocationUpdate = (req, res, next) => {
     SubVocationDetail:SubVocationDetail,
     VocationUpdate:VocationUpdate,
     SubVocationUpdate: SubVocationUpdate,
-    GetSuggetion:GetSuggetion
+    GetSuggetion:GetSuggetion,
+    VocationCreate: VocationCreate,
+    SelectVocationsList: SelectVocationsList,
+    UpdateVocation: UpdateVocation
  };
