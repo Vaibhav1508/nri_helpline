@@ -1336,6 +1336,45 @@ const archiveAnswer = (req, res, next) => {
     .catch(next);
 };
 
+const MyPostList = (req, res, next) => {
+  return questionManager
+    .MyPostList(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+const MyArchivedPostList = (req, res, next) => {
+  return questionManager
+    .MyArchivedPostList(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
+const myArchiveAnswer = (req, res, next) => {
+  return questionManager
+    .myArchiveAnswer(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
 module.exports = {
   CreateQuestion: CreateQuestion,
   QuestionList: QuestionList,
@@ -1366,4 +1405,7 @@ module.exports = {
   AnswerReplyUnlike,
   AnswerUpdate,
   archiveAnswer,
+  MyPostList,
+  MyArchivedPostList,
+  myArchiveAnswer,
 };

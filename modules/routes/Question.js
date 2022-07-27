@@ -14,6 +14,7 @@ router.post(
 router.post("/updatequestions", controller.updateQuestion);
 router.post("/questionslist", controller.QuestionList);
 router.post("/myquestionslist", controller.MyQuestionList);
+router.post("/mypostslist", controller.MyPostList);
 router.post("/questionslike", controller.QuestionLike);
 router.post("/questionsunlike", controller.QuestionUnlike);
 router.post("/questionsanswer", controller.QuestionsAnswer);
@@ -28,6 +29,7 @@ router.post("/questionsanswerunlike", controller.QuestionsAnswerUnlike);
 router.post("/questionarchive", controller.QuestionArchive);
 router.post("/questionactivate", controller.QuestionActivate);
 router.post("/myarchivedquestion", controller.MyArchivedQuestionsList);
+router.post("/myarchivedpost", controller.MyArchivedPostList);
 router.post("/viewallquestionslist", controller.ViewAllMyQuestionList);
 router.post("/viewalldraftquestionslist", controller.viewAllMyDraftQuestion);
 router.post("/voilatedquestionslist", controller.getVoilatedQuestions);
@@ -39,5 +41,6 @@ router.post("/answerreplylike", controller.AnswerReplyLike);
 router.post("/answerreplyunlike", controller.AnswerReplyUnlike);
 router.post("/answerupdate", controller.AnswerUpdate);
 router.post("/archiveanswer", controller.archiveAnswer);
+router.post("/myarchiveanswer", controller.myArchiveAnswer);
 
 module.exports = router;
