@@ -1375,6 +1375,19 @@ const myArchiveAnswer = (req, res, next) => {
     .catch(next);
 };
 
+const getVoildatedAndReportedQuestionDeatils = (req, res, next) => {
+  return questionManager
+    .getVoildatedAndReportedQuestionDeatils(req)
+    .then((data) => {
+      let result = {
+        status: 200,
+        data: data,
+      };
+      return res.json(result);
+    })
+    .catch(next);
+};
+
 module.exports = {
   CreateQuestion: CreateQuestion,
   QuestionList: QuestionList,
@@ -1408,4 +1421,5 @@ module.exports = {
   MyPostList,
   MyArchivedPostList,
   myArchiveAnswer,
+  getVoildatedAndReportedQuestionDeatils,
 };

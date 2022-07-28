@@ -42,5 +42,9 @@ router.post("/answerreplyunlike", controller.AnswerReplyUnlike);
 router.post("/answerupdate", controller.AnswerUpdate);
 router.post("/archiveanswer", controller.archiveAnswer);
 router.post("/myarchiveanswer", controller.myArchiveAnswer);
+router.post(
+  "/getVoilatedandreporteddetails",
+  controller.getVoildatedAndReportedQuestionDeatils
+);
 
 module.exports = router;

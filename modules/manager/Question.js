@@ -2016,13 +2016,32 @@ let getVoilatedQuestion = async (req) => {
         raw: true,
       });
 
-      // get reported question
+      // add status to all question
+      allQuestion.forEach((x) => {
+        // get voilated questionid
+        if (voilatedQuestionID.find((y) => y.queID == x.queID)) {
+          x.status = "Voilated";
+        }
+        if (reportedQuestionID.find((y) => y.queID == x.queID)) {
+          x.status = "Reported";
+        }
+      });
 
-      // add reported question to all question
+
+
 
       for (let i = 0; i < allQuestion.length; i++) {
         // allQuestion[i].user = await
         // run raw query to get user first name and last name with industry name
+
+        if(allQuestion[i].status === "Reported"){
+          allQuestion[i].reportedDate = await ReportModal.findOne({
+            where: { queID: allQuestion[i].queID },
+            attributes: ["createdAt"],
+            raw: true,
+          })
+        }
+
         let user = await sequelize_mysql.query(
           `SELECT userFirstName, userLastName,  industryName FROM users INNER JOIN
            industry ON users.industryID = industry.industryID WHERE userID = ${allQuestion[i].userID}`,
@@ -2066,6 +2085,47 @@ let getVoilatedQuestion = async (req) => {
   } catch (err) {
     throw new BadRequestError(err.message);
   }
+};
+
+const getVoildatedAndReportedQuestionDeatils = async (req) => {
+  let question;
+  const { body } = req;
+  ["queID", "status"].forEach((x) => {
+    if (!body[x]) {
+      throw new BadRequestError(x + " is required");
+    }
+  });
+
+  if (body.status === "Reported") {
+    question = await sequelize_mysql.query(
+      `SELECT questions.queID, questions.queQuestion, questions.queDescription,questions.queMode,
+      reportedquestion.reasonID,reportedquestion.reportedID,
+      reportedquestion.description as reportedDescription
+      FROM questions INNER JOIN reportedquestion ON questions.queID = reportedquestion.queID WHERE questions.queID =  ${body.queID}`,
+      {
+        type: sequelize.QueryTypes.SELECT,
+        raw: true,
+      }
+    );
+
+    if (question.length === 0) {
+      throw new BadRequestError("Question not found");
+    }
+    question[0].reasonDetail = await sequelize_mysql.query(
+      `SELECT reasonName,reasonDescription FROM reasons WHERE reasonID = ${question[0]?.reasonID}`,
+      {
+        type: sequelize.QueryTypes.SELECT,
+        raw: true,
+      }
+    );
+  }
+  if (body.status === "Voilated") {
+    question = await QuestionModel.findAll({
+      where: { queID: body.queID },
+      raw: true,
+    });
+  }
+  return question[0];
 };
 
 let approveAndRejectQuestion = async (req) => {
@@ -3118,7 +3178,6 @@ const reportQuestion = async (body) => {
   });
 
   if (question) {
-    // check if user already reported this question
     let isReported = await ReportModal.count({
       where: { queID: body.queID, userID: body.userID },
     });
@@ -3128,7 +3187,8 @@ const reportQuestion = async (body) => {
         let report = await ReportModal.create({
           queID: body.queID,
           userID: body.userID,
-          reasonID: 1,
+          reasonID: body.reasonID,
+          description: body.description,
           questatus: "Active",
         });
 
@@ -3729,4 +3789,5 @@ module.exports = {
   MyPostList,
   MyArchivedPostList,
   myArchiveAnswer,
+  getVoildatedAndReportedQuestionDeatils,
 };
