@@ -157,15 +157,18 @@ let VocationsList = async (body) => {
         _result.total_count = allVocationCount;
         return _result;
     }   else {
-        let allVocation = await VocationModel.findAll({
+        
+        let allVocation = await VocationsModel.findAll({
             where: findData,
+            limit,
             order: [['vocationID', 'DESC']],
             raw: true
         });
         for(let i=0 ; i<allVocation.length; i++) {
             allVocation[i].vocationImage = config.upload_folder + config.upload_entities.vocation_image_folder + allVocation[i].vocationImage;
         }
-        let allVocationCount = await VocationModel.count({        
+
+        let allVocationCount = await VocationsModel.count({        
             order: [['vocationID', 'DESC']],
             raw: true
         });
@@ -358,17 +361,21 @@ let ChangeVocationStatus = async (body) => {
     }
     let status = body.status == 1 ? 'Active' : 'Inactive'
 
-    let vocations = await VocationsModel.findAll({raw : true});
-    let allVocations = vocations.filter(x => x.relatedVocations != null)
+    // let vocations = await VocationsModel.findAll({raw : true});
+    // let allVocations = vocations.filter(x => x.relatedVocations != null)
     
-    allVocations.forEach(x => {
-        x.relatedVocations = JSON.parse(x.relatedVocations)
-        if(x.relatedVocations.includes(user.vocationID) && x.vocationStatus == "Inactive") {
-            throw new BadRequestError("Please first Activate parent vocation named '"+ x.vocationName+"'")
-        }
-    })
-    await VocationsModel.update({vocationStatus : status}, { where: {vocationID : user.vocationID},  raw: true });
-    await VocationsModel.update({vocationStatus : status},{ where: {vocationID : JSON.parse(user.relatedVocations)}, raw: true });
+    // allVocations.forEach(x => {
+    //     x.relatedVocations = JSON.parse(x.relatedVocations)
+    //     if(x.relatedVocations.includes(user.vocationID) && x.vocationStatus == "Inactive") {
+    //         throw new BadRequestError("Please first Activate parent vocation named '"+ x.vocationName+"'")
+    //     }
+    // })
+    try {
+        await VocationsModel.update({vocationStatus : status}, { where: {vocationID : user.vocationID},  raw: true });
+    } catch (e) {
+        console.log(e)
+    }
+    // await VocationsModel.update({vocationStatus : status},{ where: {vocationID : JSON.parse(user.relatedVocations)}, raw: true });
     return { status : body.status }    
 }
 
@@ -494,14 +501,34 @@ let SubVocationUpdate = async (req) => {
 }
 
 let GetSuggetion = async (body) => {
-    let subvocationData = await SubVocationModel.findAll({
-        where: {vocationID : body.vocationID, subVocationStatus : 'Active'},
+    let allVocation = await VocationsModel.findAll({
+        where: {vocationID : body.vocationID, vocationStatus : 'Active'},
         raw: true
     });
-    for(let i=0; i<subvocationData.length; i++) {
-        subvocationData[i].subVocationImage = config.upload_folder + config.upload_entities.sub_vocation_image_folder + subvocationData[i].subVocationImage;
+
+    let allVocations = []
+    let allVocatonIDs = allVocation.map(x => x.relatedVocations)
+    allVocatonIDs = allVocatonIDs.filter(x => x?.length)
+    allVocatonIDs.forEach(x => {
+        x = JSON.parse(x)
+        if(x) {
+            x.forEach(y => {
+                allVocations.push(y)
+            })
+        }
+    })
+    allVocations = [... new Set(allVocations)]
+
+    let suggetions = await VocationsModel.findAll({
+        where: {vocationID : allVocations, vocationStatus : 'Active'},
+        raw: true
+    });
+
+    for(let i=0 ; i<suggetions.length; i++) {
+        suggetions[i].vocationImage = config.upload_folder + config.upload_entities.vocation_image_folder + suggetions[i].vocationImage;
     }
-    return {slides : subvocationData};
+    console.log()
+    return {slides : suggetions};
 }
 
 let VocationCreate = async (req) => {
@@ -517,26 +544,33 @@ let VocationCreate = async (req) => {
 
     // Check for suggested/ Related vocation's are already available in others vocation list
 
-    let allRelatedSelectedVocations = await VocationsModel.findAll({
+    let vocation = await VocationsModel.findAll({
+        where : {vocationName :  body.vocationName},
         raw :  true
     })
 
+    if(vocation?.length) {
+        throw new BadRequestError("Vocation with this name already exist.")
+    }
+
     
-    let allVocations = []
-    allRelatedSelectedVocations = allRelatedSelectedVocations.map(x => x.relatedVocations)
-    allRelatedSelectedVocations = allRelatedSelectedVocations.filter(m => m != null)
-    allRelatedSelectedVocations.forEach(x => {
-        x = JSON.parse(x)
-        x.forEach(y => {
-            allVocations.push(y)
-        })
-    })
-    allVocations = [... new Set(allVocations)]
-    body.relatedVocations.forEach(x => {
-        if(allVocations.includes(x)) {
-            throw new BadRequestError("Related vocation is occupied, Please change the suggestions.")
-        }
-    })
+    // let allVocations = []
+    // allRelatedSelectedVocations = allRelatedSelectedVocations.map(x => x.relatedVocations)
+    // allRelatedSelectedVocations = allRelatedSelectedVocations.filter(m => m != null)
+    // allRelatedSelectedVocations.forEach(x => {
+    //     x = JSON.parse(x)
+    //     x.forEach(y => {
+    //         allVocations.push(y)
+    //     })
+    // })
+    // allVocations = [... new Set(allVocations)]
+    // body.relatedVocations.forEach(x => {
+    //     if(allVocations.includes(x)) {
+    //         throw new BadRequestError("Related vocation is occupied, Please change the suggestions.")
+    //     }
+    // })
+
+
 
 
     let filename = "";
@@ -572,36 +606,36 @@ let SelectVocationsList = async () => {
         raw: true
     });
 
-    let hasRelatedVocations = allVocation.filter(x => x.relatedVocations != null || x.relatedVocations?.length >= 1).map(y => y.relatedVocations)
-    let hasNotRelatedVocations = allVocation.filter(x => x.relatedVocations == null || !x.relatedVocations?.length) 
+    // let hasRelatedVocations = allVocation.filter(x => x.relatedVocations != null || x.relatedVocations?.length >= 1).map(y => y.relatedVocations)
+    // let hasNotRelatedVocations = allVocation.filter(x => x.relatedVocations == null || !x.relatedVocations?.length) 
 
-    let allHasRelatedVocation = [];
-    hasRelatedVocations.forEach(x => {
-        x = JSON.parse(x)
-        x.forEach(y => {
-            allHasRelatedVocation.push(y)
-        })
-    })
-    allHasRelatedVocation = [... new Set(allHasRelatedVocation)]
+    // let allHasRelatedVocation = [];
+    // hasRelatedVocations.forEach(x => {
+    //     x = JSON.parse(x)
+    //     x.forEach(y => {
+    //         allHasRelatedVocation.push(y)
+    //     })
+    // })
+    // allHasRelatedVocation = [... new Set(allHasRelatedVocation)]
     
-    let availableVocationToSelect = []
+    // let availableVocationToSelect = []
 
-    hasNotRelatedVocations.forEach(x => {
-        if(!allHasRelatedVocation.includes(x.vocationID)) {
-            availableVocationToSelect.push(x)
-        }
-    })
+    // hasNotRelatedVocations.forEach(x => {
+    //     if(!allHasRelatedVocation.includes(x.vocationID)) {
+    //         availableVocationToSelect.push(x)
+    //     }
+    // })
     
-    for(let i=0 ; i<availableVocationToSelect.length; i++) {
-        availableVocationToSelect[i].vocationImage = config.upload_folder + config.upload_entities.vocation_image_folder + availableVocationToSelect[i].vocationImage;
+    for(let i=0 ; i<allVocation.length; i++) {
+        allVocation[i].vocationImage = config.upload_folder + config.upload_entities.vocation_image_folder + allVocation[i].vocationImage;
     }
-    let availableVocationToSelectCount = await VocationsModel.count({        
+    let allVocationCount = await VocationsModel.count({        
         order: [['vocationID', 'DESC']],
         raw: true
     });
     let _result = { total_count: 0 };
-    _result.slides = availableVocationToSelect;
-    _result.total_count = availableVocationToSelectCount;
+    _result.slides = allVocation;
+    _result.total_count = allVocationCount;
     return _result;
 }
 
