@@ -3473,7 +3473,11 @@ const archiveAnswer = async (req) => {
   });
 
   let question = await QuestionsAnswerModel.findOne({
-    where: { queID: body.queID, answerStatus: "Archived" },
+    where: {
+      queID: body.queID,
+      answerID: body.answerID,
+      answerStatus: "Archived",
+    },
     raw: true,
   });
 
@@ -3625,7 +3629,11 @@ const myArchiveAnswer = async (req) => {
     }
 
     allQuestion[i].answer = await QuestionsAnswerModal.findAll({
-      where: { queID: allQuestion[i].queID, answerStatus: "Archived" },
+      where: {
+        queID: allQuestion[i].queID,
+        answerStatus: "Archived",
+        userID: body.userID,
+      },
       raw: true,
     });
 

@@ -115,7 +115,7 @@ let register = async (body) => {
     });
 
     let userEmailExit = await UserModel.findOne({
-      where: { userEmail: body.userEmail.trim(), userVerified: "Yes" },
+      where: { userEmail: body.userEmail.trim() },
       attributes: ["userID", "userMobile"],
     });
 
@@ -125,8 +125,7 @@ let register = async (body) => {
 
     let userMobileExist = await UserModel.findOne({
       where: {
-        userMobile: { $like: `%${body.userMobile.trim()}%` },
-        userVerified: "Yes",
+        userMobile: body.userMobile.trim(),
       },
       attributes: ["userID", "userMobile"],
     });
@@ -189,7 +188,7 @@ let register = async (body) => {
     }
   } catch (error) {
     console.log(error);
-    // throw new BadRequestError("Something went wrong");
+    throw new BadRequestError(error.message);
   }
 };
 
@@ -209,11 +208,6 @@ let VerifyOtp = async (body) => {
     //error
     throw new BadRequestError("User does not exist");
   }
-
-  // if (user.userOTP != body.otp) {
-  //     //error
-  //     throw new BadRequestError("check your otp")
-  // }
 
   if (body.otp != "123456") {
     //error
