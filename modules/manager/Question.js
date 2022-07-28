@@ -2027,19 +2027,16 @@ let getVoilatedQuestion = async (req) => {
         }
       });
 
-
-
-
       for (let i = 0; i < allQuestion.length; i++) {
         // allQuestion[i].user = await
         // run raw query to get user first name and last name with industry name
 
-        if(allQuestion[i].status === "Reported"){
+        if (allQuestion[i].status === "Reported") {
           allQuestion[i].reportedDate = await ReportModal.findOne({
             where: { queID: allQuestion[i].queID },
             attributes: ["createdAt"],
             raw: true,
-          })
+          });
         }
 
         let user = await sequelize_mysql.query(
@@ -3579,7 +3576,7 @@ const myArchiveAnswer = async (req) => {
 
   let allQuestion = await QuestionModel.findAll({
     where: findData,
-    order: [["queID", "DESC"]],
+    order: [["queCreatedDate", "ASC"]],
     raw: true,
   });
 
