@@ -636,20 +636,25 @@ const unfollowUser = async (req) => {
 };
 
 const followUser = async (req) => {
-  const body = req.body.body ? JSON.parse(req.body.body) : req.body;
-  ["userID", "userfollowUserID"].forEach((x) => {
-    if (!body[x]) {
-      throw new BadRequestError(x + " is required");
-    }
-  });
+  try {
+    const body = req.body.body ? JSON.parse(req.body.body) : req.body;
+    ["userID", "userfollowUserID"].forEach((x) => {
+      if (!body[x]) {
+        throw new BadRequestError(x + " is required");
+      }
+    });
 
-  await userFollowModal.create({
-    userID: body.userID,
-    userfollowUserID: body.userfollowUserID,
-  });
-  return {
-    message: "followed",
-  };
+    await userFollowModal.create({
+      userID: body.userID,
+      userfollowUserID: body.userfollowUserID,
+    });
+    return {
+      message: "followed",
+    };
+  } catch (err) {
+    console.log(err);
+    throw new BadRequestError(err.message);
+  }
 };
 
 const userVocationFollowList = async (req) => {

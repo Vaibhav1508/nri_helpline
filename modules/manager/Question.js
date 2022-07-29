@@ -1729,6 +1729,7 @@ let MyArchivedQuestionsList = async (req) => {
 
   let question = await QuestionModel.findAll({
     where: { queStatus: "Archived", userID: body.userID },
+    order: [["queCreatedDate", "DESC"]],
     raw: true,
   });
 
@@ -1739,10 +1740,6 @@ let MyArchivedQuestionsList = async (req) => {
       raw: true,
     });
   }
-
-  // if(!question) {
-  //   throw new BadRequestError('You do not have any archived question')
-  // }
 
   return { slides: question };
 };
@@ -2012,7 +2009,7 @@ let getVoilatedQuestion = async (req) => {
         where: { queID: questionID },
         limit,
         offset,
-        order: [["queID", "DESC"]],
+        order: [["queCreatedDate", "ASC"]],
         raw: true,
       });
 
@@ -2355,7 +2352,7 @@ let ViewAllMyQuestionList = async (body) => {
       }
 
       allQuestion[i].answer = await QuestionsAnswerModal.findAll({
-        where: { queID: allQuestion[i].queID },
+        where: { queID: allQuestion[i].queID, answerStatus: "Active" },
         raw: true,
       });
 
@@ -2461,7 +2458,7 @@ let ViewAllMyQuestionList = async (body) => {
       allQuestion[i].isUnliked = unliked == 1 ? true : false;
 
       allQuestion[i].queTotalAnswerCount = await QuestionsAnswerModel.count({
-        where: { queID: allQuestion[i].queID },
+        where: { queID: allQuestion[i].queID, answerStatus: "Active" },
         raw: true,
       });
 
@@ -2546,7 +2543,7 @@ let ViewAllMyQuestionList = async (body) => {
       }
 
       allQuestion[i].answer = await QuestionsAnswerModal.findAll({
-        where: { queID: allQuestion[i].queID },
+        where: { queID: allQuestion[i].queID, answerStatus: "Active" },
         raw: true,
       });
 
