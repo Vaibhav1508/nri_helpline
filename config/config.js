@@ -32,9 +32,17 @@ var config = {
     sub_vocation_image_folder: "/sub_vocation_image/",
     user_profile_image_folder: "/userprofile_image/",
     hr_kyc_documents_folder: "/hr_kyc_documents/",
-    country_image_folder: "/country_image/",
     post_image_folder: "/post_image/",
     compnay_image_folder: "/company_image/",
+
+    slider_image_folder: '/slider_image/',
+    admin_image_folder: '/admin_profile_image/',
+    countries_image_folder: '/country_image/',
+    profile_image_folder: '/profile_image/',
+    category_image_folder: '/category_image/',
+    news_image_folder: '/news_image/',
+    upcoming_service_icon_image_folder : '/upcoming_service_icon_image/',
+    notification_image_folder: '/notification_image/'
   },
 };
 

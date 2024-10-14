@@ -1,48 +1,45 @@
-"use strict";
+'use strict';
 let sequelize_mysql = require("../helpers/sequelize-mysql");
 let Sequelize = require("sequelize");
 
-const CityModal = sequelize_mysql.define(
-  "city",
-  {
-    cityID: {
-      type: Sequelize.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
+const SliderModal = sequelize_mysql.define("tbl_cities",
+    {
+        id :{
+            type: Sequelize.INTEGER,
+            autoIncrement: true,
+            primaryKey: true
+        },
+        i_country_id : {
+            type: Sequelize.INTEGER,
+        },
+        i_state_id: {
+            type: Sequelize.INTEGER,
+        },
+        v_name:{
+            type: Sequelize.STRING
+        },
+        i_order : {
+            type: Sequelize.INTEGER,
+        },
+        e_status: {
+            type: Sequelize.ENUM,
+            values: ['Active', 'Inactive'],
+            defaultValue : 'Active'
+        },
+        created_at: {
+            type: Sequelize.DATE,
+            defaultValue: ()=>new Date()
+        },
+        updated_at: {
+            type: Sequelize.DATE,
+            defaultValue: null
+        }
     },
-    countryID: {
-      type: Sequelize.INTEGER,
-    },
-    stateID: {
-      type: Sequelize.INTEGER,
-    },
-    cityName: {
-      type: Sequelize.STRING,
-    },
-    cityRemarks: {
-      type: Sequelize.STRING,
-      defaultValue: null,
-    },
-    cityStatus: {
-      type: Sequelize.ENUM,
-      values: ["Active", "Inactive"],
-    },
-    cityCreatedDate: {
-      type: Sequelize.DATE,
-    },
-    cityLatitude: {
-      type: Sequelize.STRING,
-      defaultValue: "0.0",
-    },
-    cityLongitude: {
-      type: Sequelize.STRING,
-      defaultValue: "0.0",
-    },
-  },
-  {
-    freezeTableName: true,
-    tableName: "city",
-  }
+    {
+        freezeTableName: true,
+        tableName: 'tbl_cities'
+    }
 );
 
-module.exports = CityModal;
+module.exports = SliderModal;
+

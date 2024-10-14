@@ -2,55 +2,64 @@
 let sequelize_mysql = require("../helpers/sequelize-mysql");
 let Sequelize = require("sequelize");
 
-module.exports = sequelize_mysql.define("admin",
+module.exports = sequelize_mysql.define("tbl_superadmin",
     {
-        Admin_ID:{
+        id:{
             type: Sequelize.INTEGER,
             autoIncrement: true,
             primaryKey: true
         },
-        Admin_Name: {
+        v_name: {
             type: Sequelize.STRING,            
         },
-        Admin_Email: {
+        v_email: {
             type: Sequelize.STRING,            
         },
-        Admin_Mobile: {
+        v_image: {
             type: Sequelize.STRING,
             defaultValue : null            
         },
-        Admin_Password: {
+        email_verified_at: {
+            type: Sequelize.DATE          
+        },
+        password:{
             type: Sequelize.STRING,
-            unique: true            
         },
-        Admin_Type: {
-            type: Sequelize.STRING,            
-        },
-        Admin_Address: {
+        v_password_token: {
             type: Sequelize.STRING,
-            defaultValue : null            
         },
-        Admin_Status: {
-            type: Sequelize.STRING, 
+        remember_token: {
+            type: Sequelize.STRING,
         },
-        Admin_Last_Login: {
-            type: Sequelize.DATE,          
-            defaultValue: ()=>new Date()
+        v_forgot_passwod_code: {
+            type: Sequelize.STRING,
+            defaultValue : null
         },
-        Created_Date: {
+        api_token :{
+            type: Sequelize.STRING,
+        },
+        e_status : {
+            type: Sequelize.ENUM,
+            values: ["Active", "Inactive"],
+            defaultValue: "Active",
+        },
+        e_type: {
+            type: Sequelize.ENUM,
+            values: ['Admin'],
+            defaultValue : 'Admin'
+        },
+        created_at: {
             type: Sequelize.DATE,
             defaultValue: ()=>new Date()
         },
-        Admin_Code_Reset_Password: {
-            type: Sequelize.STRING, 
-        },
-        Admin_Exp_CRP: {
-            type: Sequelize.STRING, 
+        updated_at: {
+            type: Sequelize.DATE,
+            defaultValue: null
         }
     },
     {
         freezeTableName: true,
-        tableName: 'admin'
+        tableName: 'tbl_superadmin'
     }
 );
 

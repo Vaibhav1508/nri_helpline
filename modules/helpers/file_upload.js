@@ -179,6 +179,139 @@ let uploadCompnayProfilePicture = multer({
   }),
 });
 
+let uploadSliderImage = multer({
+  storage: multer.diskStorage({
+    destination: function (req, file, callback) {
+      callback(
+        null,
+        config.upload_folder + config.upload_entities.slider_image_folder
+      );
+    },
+    filename: function (req, file, callback) {
+      let fileName =
+        Date.now() +
+        Math.round(Math.random() * 10000) +
+        "." +
+        file.originalname.split(".")[file.originalname.split(".").length - 1];
+      callback(null, fileName);
+    },
+  }),
+});
+
+let uploadAdminImage = multer({
+  storage: multer.diskStorage({
+    destination: function (req, file, callback) {
+      callback(
+        null,
+        config.upload_folder + config.upload_entities.admin_image_folder
+      );
+    },
+    filename: function (req, file, callback) {
+      let fileName =
+        Date.now() +
+        Math.round(Math.random() * 10000) +
+        "." +
+        file.originalname.split(".")[file.originalname.split(".").length - 1];
+      callback(null, fileName);
+    },
+  }),
+});
+
+let uploadProfileImage = multer({
+  storage: multer.diskStorage({
+    destination: function (req, file, callback) {
+      callback(
+        null,
+        config.upload_folder + config.upload_entities.profile_image_folder
+      );
+    },
+    filename: function (req, file, callback) {
+      let fileName =
+        Date.now() +
+        Math.round(Math.random() * 10000) +
+        "." +
+        file.originalname.split(".")[file.originalname.split(".").length - 1];
+      callback(null, fileName);
+    },
+  }),
+});
+
+let uploadCategoryImage = multer({
+  storage: multer.diskStorage({
+    destination: function (req, file, callback) {
+      callback(
+        null,
+        config.upload_folder + config.upload_entities.category_image_folder
+      );
+    },
+    filename: function (req, file, callback) {
+      let fileName =
+        Date.now() +
+        Math.round(Math.random() * 10000) +
+        "." +
+        file.originalname.split(".")[file.originalname.split(".").length - 1];
+      callback(null, fileName);
+    },
+  }),
+});
+
+let uploadNewsImage = multer({
+  storage: multer.diskStorage({
+    destination: function (req, file, callback) {
+      callback(
+        null,
+        config.upload_folder + config.upload_entities.news_image_folder
+      );
+    },
+    filename: function (req, file, callback) {
+      let fileName =
+        Date.now() +
+        Math.round(Math.random() * 10000) +
+        "." +
+        file.originalname.split(".")[file.originalname.split(".").length - 1];
+      callback(null, fileName);
+    },
+  }),
+});
+
+let uploadUpcomingServiceIconImage = multer({
+  storage: multer.diskStorage({
+    destination: function (req, file, callback) {
+      callback(
+        null,
+        config.upload_folder + config.upload_entities.upcoming_service_icon_image_folder
+      );
+    },
+    filename: function (req, file, callback) {
+      let fileName =
+        Date.now() +
+        Math.round(Math.random() * 10000) +
+        "." +
+        file.originalname.split(".")[file.originalname.split(".").length - 1];
+      callback(null, fileName);
+    },
+  }),
+});
+
+let uploadNotificationImage = multer({
+  storage: multer.diskStorage({
+    destination: function (req, file, callback) {
+      callback(
+        null,
+        config.upload_folder + config.upload_entities.notification_image_folder
+      );
+    },
+    filename: function (req, file, callback) {
+      let fileName =
+        Date.now() +
+        Math.round(Math.random() * 10000) +
+        "." +
+        file.originalname.split(".")[file.originalname.split(".").length - 1];
+      callback(null, fileName);
+    },
+  }),
+});
+
 module.exports = {
   userProfilePicture: userProfilePicture,
   uploadReceiverImage: uploadReceiverImage,
@@ -188,4 +321,11 @@ module.exports = {
   uploadCountryPicture: uploadCountryPicture,
   uploadPostImage: uploadPostImage,
   uploadCompnayProfilePicture: uploadCompnayProfilePicture,
+  uploadSliderImage:uploadSliderImage,
+  uploadAdminImage:uploadAdminImage,
+  uploadProfileImage:uploadProfileImage,
+  uploadCategoryImage: uploadCategoryImage,
+  uploadNewsImage:uploadNewsImage,
+  uploadUpcomingServiceIconImage: uploadUpcomingServiceIconImage,
+  uploadNotificationImage:uploadNotificationImage,
 };

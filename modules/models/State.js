@@ -1,37 +1,42 @@
-"use strict";
+'use strict';
 let sequelize_mysql = require("../helpers/sequelize-mysql");
 let Sequelize = require("sequelize");
 
-const StateModal = sequelize_mysql.define(
-  "state",
-  {
-    stateID: {
-      type: Sequelize.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
+const SliderModal = sequelize_mysql.define("tbl_states",
+    {
+        id :{
+            type: Sequelize.INTEGER,
+            autoIncrement: true,
+            primaryKey: true
+        },
+        i_country_id : {
+            type: Sequelize.INTEGER,
+        },
+        v_name:{
+            type: Sequelize.STRING
+        },
+        i_order : {
+            type: Sequelize.INTEGER,
+        },
+        e_status: {
+            type: Sequelize.ENUM,
+            values: ['Active', 'Inactive'],
+            defaultValue : 'Active'
+        },
+        created_at: {
+            type: Sequelize.DATE,
+            defaultValue: ()=>new Date()
+        },
+        updated_at: {
+            type: Sequelize.DATE,
+            defaultValue: null
+        }
     },
-    countryID: {
-      type: Sequelize.INTEGER,
-    },
-    stateName: {
-      type: Sequelize.STRING,
-    },
-    stateRemarks: {
-      type: Sequelize.STRING,
-      defaultValue: null,
-    },
-    stateStatus: {
-      type: Sequelize.ENUM,
-      values: ["Active", "Inactive"],
-    },
-    stateCreatedDate: {
-      type: Sequelize.DATE,
-    },
-  },
-  {
-    freezeTableName: true,
-    tableName: "state",
-  }
+    {
+        freezeTableName: true,
+        tableName: 'tbl_states'
+    }
 );
 
-module.exports = StateModal;
+module.exports = SliderModal;
+

@@ -4,13 +4,13 @@ let helper = require("../helpers/helpers"),
   _ = require("lodash"),
   md5 = require("md5"),
   AdminModel = require("../models/Admin"),
-  UsersModel = require("../models/Users"),
-  IndustryModel = require("../models/Industry"),
+  UserModel = require("../models/User"),
+  AdminTokenModel = require("../models/Admin_tokens"),
   BadRequestError = require("../errors/badRequestError");
 const { v4: uuidv4 } = require("uuid");
-const CompanyModel = require("../models/Company");
-const mailer = require("../helpers/mail.Helper");
 const config = require("../../config/config");
+const nodemailer = require('nodemailer');
+const moment = require('moment');
 
 let generateAuthToken = async (phone) => {
   return uuidv4();
@@ -18,129 +18,77 @@ let generateAuthToken = async (phone) => {
 
 let Login = async (body) => {
   if (helper.undefinedOrNull(body)) {
-    throw new BadRequestError("body_empty");
+    throw new BadRequestError("body_empty.");
   }
 
-  if (helper.undefinedOrNull(body.userEmail)) {
-    throw new BadRequestError("Email ID / User Name is required");
+  if (helper.undefinedOrNull(body.email)) {
+    throw new BadRequestError("Email ID / User Name is required.");
   }
-  if (helper.undefinedOrNull(body.userPassword)) {
-    throw new BadRequestError("Password is required");
+  if (helper.undefinedOrNull(body.password)) {
+    throw new BadRequestError("Password is required.");
   }
 
   let findData = {};
-  findData["$or"] = [{ Admin_Email: { $eq: body.userEmail } }];
-  findData["$and"] = [{ Admin_Password: { $eq: md5(body.userPassword) } }];
+  findData["$or"] = [{ v_email: { $eq: body.email } }];
+  findData["$and"] = [{ password: { $eq: md5(body.password) } }];
   let user = await AdminModel.findOne({
     where: findData,
-    attributes: ["Admin_ID", "Admin_Mobile"],
+    attributes: ["id","v_name", "v_email", "v_image", 'e_type'],
     raw: true,
   });
 
   if (!user) {
-    throw new BadRequestError("Please check your credentials again");
+    throw new BadRequestError("Please check your credentials again.");
   }
 
-  let authToken = await generateAuthToken(user.Admin_Mobile);
+  user.v_image_path = user.v_image
+      ? process.env.BASE_URL +'/'+ config.upload_folder +
+        config.upload_entities.admin_image_folder +
+        user.v_image
+      : config.upload_folder +
+        config.upload_entities.admin_image_folder +
+        "NO_IMAGE_FOUND.jpg";
+
+  const currentTimestamp = Date.now();
+  let authToken = await generateAuthToken(currentTimestamp.toString());
   await AdminModel.update(
-    { token: authToken },
-    { where: { Admin_ID: user.Admin_ID } }
+    { v_password_token: authToken, api_token: authToken },
+    { where: { id: user.id } }
   );
+
+  let tokenData = {
+    i_admin_id : user.id,
+    v_token : authToken,
+    expire_time : moment().add(2, 'hours').format('YYYY-MM-DD HH:mm:ss')
+  }
+
+  await AdminTokenModel.create(tokenData)
 
   return {
     token: authToken,
     login: true,
+    user: user
   };
-};
-
-// let changePassword = async (adminid,req_body) => {
-
-//     if (helper.undefinedOrNull(req_body)) {
-//         throw new BadRequestError('Request body comes empty');
-//     }
-
-//     if (helper.undefinedOrNull(req_body.new_password)) {
-//         throw new BadRequestError("New Password is required");
-//     }
-//     if (helper.undefinedOrNull(req_body.old_password)) {
-//         throw new BadRequestError("Old Password is required");
-//     }
-//      let user = await UserModel.findOne({ where: { password:md5(req_body.old_password),id:adminid }, attributes: ['id','email'] ,raw:true})
-//     if(!user){
-//         throw new BadRequestError("no user found");
-//     }
-
-//      await UserModel.update({ password: md5(req_body.new_password) }, { where: { id: user.id }, raw: true });
-//     return { userId:user.id};
-
-// }
-
-// let signout = async (adminid, authToken) => {
-//     if (!authToken) {
-//         throw new BadRequestError("authToken is required");
-//     }
-//     await UserModel.update({ token:null }, { where: { id: adminid}, raw: true });
-//     return true;
-// }
-
-let UsersList = async (body) => {
-  console.log(body);
-  let limit = body.limit ? parseInt(body.limit) : 10;
-  let page = body.page || 1;
-  let offset = (page - 1) * limit;
-  let findData = {
-    userType: "Professional",
-  };
-  if (body.filters) {
-    if (body.filters.searchtext) {
-      findData["$or"] = [
-        { userFirstName: { $like: "%" + body.filters.searchtext + "%" } },
-        { userLastName: { $like: "%" + body.filters.searchtext + "%" } },
-      ];
-    }
-  }
-  let allUser = await UsersModel.findAll({
-    where: findData,
-    limit,
-    offset,
-    order: [["userID", "DESC"]],
-    raw: true,
-  });
-  for (let i = 0; i < allUser.length; i++) {
-    let IndustryName = await IndustryModel.findOne(
-      { where: { industryID: allUser[i].industryID } },
-      {
-        raw: true,
-      }
-    );
-    allUser[i].industryName = IndustryName?.industryName || "";
-  }
-  let allUserCount = await UsersModel.count({
-    where: findData,
-    order: [["userID", "DESC"]],
-    raw: true,
-  });
-  let _result = { total_count: 0 };
-  _result.slides = allUser;
-  _result.total_count = allUserCount;
-  return _result;
 };
 
 let UsersDetail = async (req) => {
-  if (!req.params.userID) {
-    throw new BadRequestError("UserID is required");
+  if (!req.admin.adminid) {
+    throw new BadRequestError("UserID is required.");
   }
-  let userData = await UsersModel.findOne({
-    where: { userID: req.params.userID },
+  let userData = await AdminModel.findOne({
+    where: { id: req.admin.adminid },
+    attributes: ["id", "v_name", 'v_email', 'v_image'],
     raw: true,
   });
-  let IndustryName = await IndustryModel.findOne(
-    { where: { industryID: userData.industryID } },
-    {
-      raw: true,
-    }
-  );
-  userData.industryName = IndustryName?.industryName || "";
+
+  userData.v_image_path = userData.v_image
+      ? process.env.BASE_URL+'/'+ config.upload_folder +
+        config.upload_entities.admin_image_folder +
+        userData.v_image
+      : config.upload_folder +
+        config.upload_entities.admin_image_folder +
+        "NO_IMAGE_FOUND.jpg";
+  
   return { data: userData };
 };
 
@@ -148,534 +96,246 @@ let UserUpdate = async (req) => {
   try {
     let body = req.body.body ? JSON.parse(req.body.body) : req.body;
     if (helper.undefinedOrNull(body)) {
-      throw new BadRequestError("body_empty");
+      throw new BadRequestError("body_empty.");
     }
     [
-      "userFirstName",
-      "userLastName",
-      "userEmail",
-      "userMobile",
-      "industryID",
-      "userJobDescription",
+      "v_name",
+      "v_email"
     ].forEach((x) => {
       if (!body[x]) {
-        throw new BadRequestError(x + " is required");
+        throw new BadRequestError(x + " is required.");
       }
     });
     let updateData = {};
     let optionalFiled = [
-      "userFirstName",
-      "userLastName",
-      "userEmail",
-      "userMobile",
-      "industryID",
-      "userJobDescription",
+      "v_name",
+      "v_email"
     ];
     optionalFiled.forEach((x) => {
       if (body[x]) {
         updateData[x] = body[x];
       }
     });
-    await UsersModel.update(updateData, {
-      where: { userID: req.params.userID },
+    if (req.file && req.file.filename) {
+      updateData["v_image"] = req.file.filename;
+    }
+    updateData["updated_at"] = Date.now();
+    await AdminModel.update(updateData, {
+      where: { id: req.admin.adminid },
       raw: true,
     });
-    let user = await UsersModel.findOne({
-      where: { userID: req.params.userID },
+    let user = await AdminModel.findOne({
+      where: { id: req.admin.adminid },
       raw: true,
     });
 
-    return { slides: user };
+    user.v_image_path = user.v_image
+      ? process.env.BASE_URL+'/'+ config.upload_folder +
+        config.upload_entities.admin_image_folder +
+        user.v_image
+      : config.upload_folder +
+        config.upload_entities.admin_image_folder +
+        "NO_IMAGE_FOUND.jpg";
+
+    return { user: user };
   } catch (err) {
     console.log(err);
   }
 };
 
-let ChangeUserStatus = async (body) => {
+let ForgetPassword = async (body, req) => {
   if (helper.undefinedOrNull(body)) {
-    throw new BadRequestError("body_empty");
+      throw new BadRequestError(req.t("body_empty."));
   }
-
-  if (helper.undefinedOrNull(body.userID)) {
-    throw new BadRequestError("User ID is required");
+  if (helper.undefinedOrNull(body.v_email)) {
+      throw new BadRequestError("email is required.");
   }
-  if (helper.undefinedOrNull(body.status)) {
-    throw new BadRequestError("Status is required");
-  }
-
-  let user = await UsersModel.findOne({
-    where: { userID: body.userID },
-    raw: true,
-  });
+  let findData = {}
+  findData["$or"] = [
+      { v_email: { $eq: body.v_email } },
+  ]
+  let user = await AdminModel
+      .findOne({ where: findData, attributes: ['id', 'v_name', 'v_email', 'v_image'], raw: true });
   if (!user) {
-    throw new BadRequestError("Please check your credentials again");
+      throw new BadRequestError(req.t("user_404."));
   }
-  if (user.userStatus == "Active" && body.status == 1) {
-    throw new BadRequestError("Already activated");
+  const currentTimestamp = Date.now();
+  let authToken = await generateAuthToken(currentTimestamp.toString());
+  let otp = await GenerateOTP();
+  let authRecord = {
+    v_password_token: authToken,
+    api_token: authToken,
+    v_forgot_passwod_code: authToken
   }
-  if (user.userStatus == "Inactive" && body.status != 1) {
-    throw new BadRequestError("Already inactivated");
-  }
-  let status = body.status == 1 ? "Active" : "Inactive";
-  await UsersModel.update(
-    { userStatus: status },
-    {
-      where: { userID: user.userID },
-      attributes: ["Admin_ID", "Admin_Mobile"],
-      raw: true,
-    }
-  );
-  return { status: body.status };
-};
-
-let craeateBusinessAssociate = async (req) => {
-  try {
-    let body = req.body.body ? JSON.parse(req.body.body) : req.body;
-
-    [
-      "companyName",
-      "userFirstName",
-      "userEmail",
-      "userMobile",
-      "streetAddress",
-      "companyPincode",
-      "userCountryCode",
-      "userStateCode",
-      "userCityCode",
-    ].forEach((x) => {
-      if (!body[x]) {
-        throw new BadRequestError(x + " is required");
-      }
-    });
-
-    // create company
-    let company = await CompanyModel.create({
-      companyName: body.companyName,
-      companyEmail: body.userEmail,
-      companyLocations: body.streetAddress,
-      companyStreet2: body.streetAddress2 ? body.streetAddress2 : "",
-      companyPincode: body.companyPincode ? body.companyPincode : "",
-      companyPhoneNumber: body.companyPhoneNumber
-        ? body.companyPhoneNumber
-        : "",
-    });
-
-    // create hr
-    let hr = await UsersModel.create({
-      ...body,
-      userLastName: "",
-      userPassword: md5("123456"),
-      userType: "HR",
-      userStatus: "Active",
-      userCompanyId: company.companyID,
-    });
-
-    // send mail
-    let mailData = {
-      to: body.userEmail,
-      subject: "Welcome to Vocation",
-      html: `<div>
-      <h1>Welcome to Vocation</h1>
-      <p>
-        Hi ${body.userFirstName},<br />
-        <br />
-        Welcome to Vocation. You have successfully registered as a Corporate.
-        
-        <br />
-        Your Password to login into app is 123456.
-        `,
-    };
-
-    await mailer.sendMail(mailData);
-
-    return { status: true };
-  } catch (err) {
-    console.log(err);
-    throw new BadRequestError(err.errors);
-  }
-};
-
-let AssociateUpdate = async (req) => {
-  try {
-    let body = req.body.body ? JSON.parse(req.body.body) : req.body;
-
-    [
-      "companyName",
-      "userFirstName",
-      "userEmail",
-      "userMobile",
-      "streetAddress",
-      "userCountryCode",
-      "userStateCode",
-      "userCityCode",
-    ].forEach((x) => {
-      if (!body[x]) {
-        throw new BadRequestError(x + " is required");
-      }
-    });
-
-    await UsersModel.update(body, {
-      where: { userID: req.params.userID },
-      raw: true,
-    });
-    let user = await UsersModel.findOne({
-      where: { userID: req.params.userID },
-      raw: true,
-    });
-
-    // update company details
-    await CompanyModel.update(
-      {
-        companyName: body.companyName,
-        companyEmail: body.userEmail,
-        companyLocations: body.streetAddress,
-        companyStreet2: body.streetAddress2 ? body.streetAddress2 : "",
-        companyPincode: body.companyPincode ? body.companyPincode : "",
-        companyPhoneNumber: body.companyPhoneNumber
-          ? body.companyPhoneNumber
-          : "",
-      },
-      {
-        where: { companyID: user.userCompanyId },
-        raw: true,
-      }
-    );
-
-    return { slides: user };
-  } catch (err) {
-    console.log(err);
-    throw new BadRequestError(err.errors);
-  }
-};
-
-// get associate list
-let getAssociateList = async (body) => {
-  try {
-    let limit = body.limit ? parseInt(body.limit) : 10;
-    let page = body.page || 1;
-    let offset = (page - 1) * limit;
-    let findData = {};
-    if (body.filters) {
-      if (body.filters.searchtext) {
-        findData["$or"] = [
-          { userFirstName: { $like: "%" + body.filters.searchtext + "%" } },
-        ];
-      }
-    }
-    let associates = await UsersModel.findAll({
-      where: {
-        ...findData,
-        userType: "HR",
-      },
-      limit,
-      offset,
-      order: [["userID", "DESC"]],
-      raw: true,
-    });
-
-    // company list
-    let companyList = await CompanyModel.findAll({
-      raw: true,
-    });
-
-    const associateList = associates.map((x) => {
-      let company = companyList.find((y) => y.companyID == x.userCompanyId);
-      return {
-        userID: x.userID,
-        userFirstName: x.userFirstName,
-        userLastName: x.userLastName,
-        userEmail: x.userEmail,
-        userMobile: x.userMobile,
-        userCompanyId: x.userCompanyId,
-        companyName: company?.companyName,
-        companyStatus: company?.companyOperatingStatus,
-        userStatus: x.userStatus,
-        userVerified: x.userDocumentVerified,
-      };
-    });
-
-    let _result = { total_count: 0 };
-    _result.slides = associateList;
-    _result.total_count = associateList.length;
-    return _result;
-
-    // return { data: associateList };
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-// get associate details
-let getAssociateDetails = async (req) => {
-  let user = await UsersModel.findOne({
-    where: { userID: req.params.userID },
+  await AdminModel.update(authRecord, {
+    where: { id: user.id },
     raw: true,
   });
-  let companyList = await CompanyModel.findAll({
-    raw: true,
-  });
-  let company = companyList.find((x) => x.companyID == user.userCompanyId);
+  // if (user.email) {
+  //     await SEND_EMAIL.SendPasswordResetOTP(user.email, otp);
+  // }
+  // if (user.phone) {
+  //     await SEND_SMS.sms(otp, "+" + country.isd_code + user.phone);
+  // }
 
-  return {
-    ...user,
-    streetAddress: company?.companyLocations,
-    companyName: company?.companyName,
-    streetAddress2: company?.companyStreet2,
-    companyPincode: company?.companyPincode,
-    companyPhoneNumber: company?.companyPhoneNumber,
-    userGst: user.userGst
-      ? `${process.env.BASE_URL}/${config.upload_folder}${config.upload_entities.hr_kyc_documents_folder}${user.userGst}`
-      : "",
-    userPan: user.userPan
-      ? `${process.env.BASE_URL}/${config.upload_folder}${config.upload_entities.hr_kyc_documents_folder}${user.userPan}`
-      : "",
-  };
-};
-
-// upload kyc document
-let uploadKycDocument = async (req) => {
-  try {
-    let body = req.body.body ? JSON.parse(req.body.body) : req.body;
-    // get files from request
-    let files = req.files;
-
-    // get user id from request
-    let userID = req.body.userID;
-    let user = await UsersModel.findOne({
-      where: { userID: userID },
-      raw: true,
-    });
-
-    // set images in user details
-    if (files.PAN) {
-      let user = await UsersModel.findOne({
-        where: { userID: userID },
-        raw: true,
-      });
-      user.userPan = files.PAN[0].filename;
-      user.isPanVerified = "Pending";
-      user.userDocumentRejectionReason = null;
-      await UsersModel.update(user, {
-        where: { userID: userID },
-      });
+  // Create a transporter using your email service provider's SMTP settings
+  const transporter = nodemailer.createTransport({
+    service: 'Gmail',
+    auth: {
+      user: process.env.SENDER_EMAIL,
+      pass: process.env.SENDER_PASSWORD
     }
-    if (files.GST) {
-      let user = await UsersModel.findOne({
-        where: { userID: userID },
-        raw: true,
-      });
-      user.userGst = files.GST[0].filename;
-      user.isGstVerified = "Pending";
-      user.userDocumentRejectionReason = null;
-      await UsersModel.update(user, {
-        where: { userID: userID },
-      });
-    }
-
-    // send mail to notify that document is uploaded
-    let mailData = {
-      to: user.userEmail,
-      subject: "KYC Document Uploaded",
-      html: `<div>
-      <h1>KYC Document Uploaded</h1>
-      <p>
-        Hi ${user.userFirstName},<br />
-        <br />
-        Your KYC document has been uploaded successfully.
-        Please wait for the approval from the admin.
-        `,
-    };
-
-    await mailer.sendMail(mailData);
-
-    return { status: true };
-  } catch (err) {
-    console.log(err);
-    throw new BadRequestError(err.errors);
-  }
-};
-
-// Approve and reject associate
-let ApproveHr = async (req) => {
-  let body = req.body.body ? JSON.parse(req.body.body) : req.body;
-
-  // get user details
-  let user = await UsersModel.findOne({
-    where: { userID: body.userID },
-    raw: true,
   });
 
-  // update user details
-  await UsersModel.update(
-    {
-      userDocumentVerified: "Yes",
-    },
-    {
-      where: { userID: body.userID },
-      raw: true,
-    }
-  );
-
-  // send mail to notify that document is uploaded
-  let mailData = {
-    to: user.userEmail,
-    subject: "KYC Document Approved",
-    html: `
-    <div>
-    <h1>KYC Document Approved</h1>
-    <p>
-      Hi ${user.userFirstName},<br />
-      <br />
-      Your KYC document has been approved.
-    </p>
-    </div>
-    `,
+  // Define the email content
+  const mailOptions = {
+    from: process.env.SENDER_EMAIL,
+    to: body.v_email,
+    subject: 'Password recovery mail from NRIHELPLINE',
+    html: `<p>Hello,</p><p>You have requested to reset your password. Click the following link to reset your password:</p><p><a href="http://34.225.159.179:5000/change-password/${body.v_email}/${authToken}">Reset Password</a></p><p>If you did not request this password reset, you can safely ignore this email.</p><p>Best regards,<br>Your Application Team</p>`
   };
 
-  await mailer.sendMail(mailData);
-
-  return { status: true };
-};
-
-let RejectHr = async (req) => {
-  let body = req.body.body ? JSON.parse(req.body.body) : req.body;
-
-  ["userID", "reason"].forEach((x) => {
-    if (!body[x]) {
-      throw new Error(`${x} is required`);
+  // Send the email
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error('Error sending email:', error);
+    } else {
+      console.log('Email sent:', info.response);
     }
   });
 
-  // get user details
-  let user = await UsersModel.findOne({
-    where: { userID: body.userID },
+  return { mail_Sent : true, code : authToken }
+}
+
+let GenerateOTP = async () => {
+  return Date.now().toString().slice(process.env.OTP_LENGTH);
+}
+
+let ResetPassword = async (body, req) => {
+  if (helper.undefinedOrNull(body)) {
+      throw new BadRequestError(req.t("body_empty."));
+  }
+  console.log(body.v_email)
+  if (helper.undefinedOrNull(body.v_email)) {
+    throw new BadRequestError("email is required.");
+  }
+  if (helper.undefinedOrNull(body.password)) {
+      throw new BadRequestError("password is required.");
+  }
+
+  if (helper.undefinedOrNull(body.code)) {
+    throw new BadRequestError("code is required.");
+  }
+  let findData = {}
+  findData["$or"] = [
+      { v_email: { $eq: body.v_email }, v_forgot_passwod_code: { $eq: body.code } },
+  ]
+  let user = await AdminModel
+      .findOne({ where: findData, attributes: ['id', 'v_name', 'v_email', 'v_image'], raw: true });
+  if (!user) {
+      throw new BadRequestError(req.t("User is not valid."));
+  }
+  let authRecord = {
+    password: md5(body.password)
+  }
+  await AdminModel.update(authRecord, {
+    where: { id: user.id },
     raw: true,
   });
+  // if (user.email) {
+  //     await SEND_EMAIL.SendPasswordResetOTP(user.email, otp);
+  // }
+  // if (user.phone) {
+  //     await SEND_SMS.sms(otp, "+" + country.isd_code + user.phone);
+  // }
+  return { changed_password : true }
+}
 
-  if (body.type == "GST" && body.status == "Rejected") {
-    user.isGstVerified = "Rejected";
+let ChangePassword = async (body, req) => {
+  console.log(md5('12345'))
+  if (helper.undefinedOrNull(body)) {
+      throw new BadRequestError(req.t("body_empty."));
+  }
+  if (helper.undefinedOrNull(body.v_email)) {
+    throw new BadRequestError("email is required.");
+  }
+  if (helper.undefinedOrNull(body.old_password)) {
+      throw new BadRequestError("old password is required.");
   }
 
-  if (body.type == "PAN" && body.status == "Rejected") {
-    user.isPanVerified = "Rejected";
+  if (helper.undefinedOrNull(body.new_password)) {
+    throw new BadRequestError("new password is required.");
   }
-
-  if (body.type === "both" && body.status === "Rejected") {
-    user.isGstVerified = "Rejected";
-    user.isPanVerified = "Rejected";
+  if (!body.v_email) {
+    throw new BadRequestError("email is required.");
   }
-
-  // update user details
-  await UsersModel.update(
-    {
-      ...user,
-      userDocumentVerified: "No",
-      userDocumentRejectionReason: body.reason,
-    },
-    {
-      where: { userID: body.userID },
-      raw: true,
-    }
-  );
-
-  // send mail to notify that document is uploaded
-  let mailData = {
-    to: user.userEmail,
-    subject: "KYC Document Rejected",
-    html: `
-    <div>
-    <h1>KYC Document Rejected</h1>
-    <p>
-      Hi ${user.userFirstName},<br />
-      <br />
-      Your KYC document has been rejected.
-      <br />
-      <br />
-      Reason: ${body.reason}
-    </p>
-    </div>
-    `,
-  };
-
-  await mailer.sendMail(mailData);
-
-  return { status: true };
-};
-
-// approve and reject single document Gst or Pan
-const approveRejectSingleDocument = async (req) => {
-  try {
-    let body = req.body.body ? JSON.parse(req.body.body) : req.body;
-
-    let user = await UsersModel.findOne({
-      where: { userID: body.userID },
-      raw: true,
-    });
-
-    if (body.type == "GST" && body.status == "Approved") {
-      user.isGstVerified = "Approved";
-    }
-    if (body.type == "PAN" && body.status == "Approved") {
-      user.isPanVerified = "Approved";
-    }
-
-    await UsersModel.update(user, {
-      where: { userID: body.userID },
-    });
-
-    user = await UsersModel.findOne({
-      where: { userID: body.userID },
-      raw: true,
-    });
-
-    if (user.isGstVerified == "Approved" && user.isPanVerified == "Approved") {
-      await UsersModel.update(
-        {
-          userDocumentVerified: "Yes",
-        },
-        {
-          where: { userID: body.userID },
-          raw: true,
-        }
-      );
-
-      // mail for user that document is approved
-      let mailData = {
-        to: user.userEmail,
-        subject: "KYC Document Approved",
-        html: `
-          <div>
-          <h1>KYC Document Approved</h1>
-          <p>
-            Hi ${user.userFirstName},<br />
-            <br />
-            Your KYC document has been approved.
-          </p>
-          </div>
-          `,
-      };
-      await mailer.sendMail(mailData);
-    }
-
-    return { status: true };
-  } catch (error) {
-    console.log(error);
-    throw new Error(error);
+  if (!body.old_password) {
+    throw new BadRequestError("old password is required.");
   }
-};
+  if (!body.new_password) {
+    throw new BadRequestError("new password is required.");
+  }
+  let findData = {}
+  findData["$or"] = [
+      { v_email: { $eq: body.v_email }, password: { $eq: md5(body.old_password) } },
+  ]
+  let user = await AdminModel
+      .findOne({ where: findData, raw: true });
+  if (!user) {
+      throw new BadRequestError(req.t("Old password is not correct."));
+  }
+  let authRecord = {
+    password: md5(body.new_password)
+  }
+  await AdminModel.update(authRecord, {
+    where: { id: user.id },
+    raw: true,
+  });
+  
+  return { changed_password : true }
+}
+
+let SendOtp = async (body, req) => {
+  // let body = req.body.body ? JSON.parse(req.body.body) : req.body;
+  if (helper.undefinedOrNull(body)) {
+    throw new BadRequestError(req.t("body_empty."));
+  }
+  if (helper.undefinedOrNull(body.v_mobile_number)) {
+    throw new BadRequestError("mobile number is required.");
+  }
+  let findData = {}
+  findData["$or"] = [
+      { v_mobile_number: { $eq: body.v_mobile_number } },
+  ]
+  let user = await UserModel
+      .findOne({ where: findData, attributes: ['id', 'v_full_name', 'v_email', 'v_profile_image'], raw: true });
+  if (!user) {
+      throw new BadRequestError('User not found.');
+  }
+  let otp = await GenerateOTP();
+  let authRecord = {
+    v_otp: otp
+  }
+  await UserModel.update(authRecord, {
+    where: { id: user.id },
+    raw: true,
+  });
+  // if (user.email) {
+  //     await SEND_EMAIL.SendPasswordResetOTP(user.email, otp);
+  // }
+  // if (user.phone) {
+  //     await SEND_SMS.sms(otp, "+" + country.isd_code + user.phone);
+  // }
+  return { otp_sent : true, otp : otp }
+}
 
 module.exports = {
   Login: Login,
-  UsersList: UsersList,
-  ChangeUserStatus: ChangeUserStatus,
   UsersDetail: UsersDetail,
   UserUpdate: UserUpdate,
-  craeateBusinessAssociate: craeateBusinessAssociate,
-  getAssociateList,
-  AssociateUpdate,
-  getAssociateDetails,
-  uploadKycDocument,
-  ApproveHr,
-  RejectHr,
-  approveRejectSingleDocument,
+  ForgetPassword: ForgetPassword,
+  GenerateOTP: GenerateOTP,
+  ResetPassword: ResetPassword,
+  ChangePassword: ChangePassword,
+  SendOtp: SendOtp
 };

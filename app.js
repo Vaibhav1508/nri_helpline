@@ -17,6 +17,8 @@ let express = require("express"),
   swaggerUi = require("swagger-ui-express");
 const httpServer = http.createServer(app);
 const socketIo = require("socket.io");
+const firebase = require("firebase-admin");
+const serviceAccount = require("./firebase.config.json");
 const io = socketIo(httpServer, { cors: { origin: "*" } });
 
 console.log("Initializing Server.", new Date().toString());
@@ -55,7 +57,7 @@ const docOptions = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "Vocation",
+      title: "nri_helpline",
       version: "1",
     },
     servers: [
@@ -102,7 +104,13 @@ require("./routes")(app);
 console.log("Plugging the error leaks.");
 app.use(responseHandler.onError);
 
-module.exports = app;
+firebase.initializeApp({
+  credential: firebase.credential.cert(serviceAccount)
+})
+
+const messaging = firebase.messaging();
+
+module.exports = {app, firebase, messaging};
 
 console.log("Ready for requests.");
 

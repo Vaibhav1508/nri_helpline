@@ -19,13 +19,33 @@ module.exports = app => {
     });
 
     app.use(auth.validateApiKey);
-    app.use('/api/v1/auth', require('./modules/routes/Users'));
     app.use('/api/v1/Admin', require('./modules/routes/Admin'));
-    app.use('/api/v1/vocation', require('./modules/routes/Vocation'));
-    app.use('/api/v1/Industry', require('./modules/routes/Industry'));
-    app.use('/api/v1/User', require('./modules/routes/Users'));
-    app.use('/api/v1/Question', require('./modules/routes/Question'));
-    app.use('/api/v1/Master', require('./modules/routes/Master'));
+
+    app.use('/api/v1/intro_slider', require('./modules/routes/slider'));
+    app.use('/api/v1/category', require('./modules/routes/category'));
+    app.use('/api/v1/user', require('./modules/routes/user'));
+    app.use('/api/v1/tags', require('./modules/routes/tags'));
+    app.use('/api/v1/news', require('./modules/routes/news'));
+    app.use('/api/v1/upcoming_service', require('./modules/routes/upcoming_service'));
+    app.use('/api/v1/upcoming_service_feedback', require('./modules/routes/upcoming_service_feedback'));
+    app.use('/api/v1/poll_questions', require('./modules/routes/poll_questions'));
+    app.use('/api/v1/push_notification', require('./modules/routes/push_notification'));
+    app.use('/api/v1/dashboard', require('./modules/routes/dashboard'));
+
+    app.use('/api/v1/mobile/auth', require('./modules/routes/mobile/auth'));
+    app.use('/api/v1/mobile/intro_slider', require('./modules/routes/mobile/intro_slider'));
+    app.use('/api/v1/mobile/countries', require('./modules/routes/mobile/countries'));
+    app.use('/api/v1/mobile/state', require('./modules/routes/mobile/state'));
+    app.use('/api/v1/mobile/city', require('./modules/routes/mobile/city'));
+    app.use('/api/v1/mobile/profession', require('./modules/routes/mobile/auth'));
+
+    app.use('/api/v1/mobile/home_screen', require('./modules/routes/mobile/home_screen'));
+    app.use('/api/v1/mobile/categories', require('./modules/routes/mobile/categories'));
+    app.use('/api/v1/mobile/news', require('./modules/routes/mobile/news'));
+    app.use('/api/v1/mobile/upcoming_service', require('./modules/routes/mobile/upcoming_service'));
+    app.use('/api/v1/mobile/master', require('./modules/routes/mobile/master'));
+    app.use('/api/v1/mobile/poll_questions', require('./modules/routes/mobile/poll_questions'));
+    app.use('/api/v1/mobile/notification', require('./modules/routes/mobile/notification'));
 
     // app.use('/api/v1/country', require('./modules/routes/Country'));
 
